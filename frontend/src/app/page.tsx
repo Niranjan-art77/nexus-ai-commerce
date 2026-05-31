@@ -7,17 +7,16 @@ import { useDispatch } from "react-redux";
 import { addToCart } from "@/store/slices/cartSlice";
 import { mockDb } from "@/utils/mockDb";
 import { NavBar } from "@/components/ui/NavBar";
-import Scene from "@/components/canvas/Scene";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Sparkles, Terminal, Activity, Zap, Shield, GitBranch, MessageSquare, Briefcase,
   UserCheck, Search, ShoppingBag, TrendingUp, AlertCircle, Play, Sliders, ShieldAlert,
-  ArrowRight, Check, Heart, Cpu, Compass, HelpCircle, Layers, Globe2
+  ArrowRight, Check, Heart, Cpu, Compass, HelpCircle, Layers, Globe2, Database, RefreshCw
 } from "lucide-react";
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip,
   LineChart, Line, BarChart, Bar, RadarChart, PolarGrid,
-  PolarAngleAxis, PolarRadiusAxis, Radar
+  PolarAngleAxis, PolarRadiusAxis, Radar, CartesianGrid
 } from "recharts";
 
 export default function Home() {
@@ -27,6 +26,19 @@ export default function Home() {
 
   // Active section for sidebar jumping
   const [activeHUDSection, setActiveHUDSection] = useState("COMMAND");
+  const [viewMode, setViewMode] = useState<"focus" | "unified">("focus");
+  const [osCommand, setOsCommand] = useState("");
+
+  // Proxy Negotiator States
+  const [budgetPriority, setBudgetPriority] = useState(80);
+  const [qualityPriority, setQualityPriority] = useState(70);
+  const [assetClass, setAssetClass] = useState("ServerCore");
+  const [vendorPrice, setVendorPrice] = useState(320);
+  const [targetPrice, setTargetPrice] = useState(180);
+  const [negotiating, setNegotiating] = useState(false);
+  const [chatLog, setChatLog] = useState<any[]>([]);
+  const [chartData, setChartData] = useState<any[]>([]);
+  const [activeStatus, setActiveStatus] = useState("Idle");
 
   // Telemetry Dashboard States
   const [telemetry, setTelemetry] = useState({
@@ -353,11 +365,333 @@ export default function Home() {
     alert(`${item.name} added to your procurement cart.`);
   };
 
+  // 11. Proxy Negotiator simulation runner
+  const runNegotiation = () => {
+    setNegotiating(true);
+    setChatLog([]);
+    setChartData([]);
+    setActiveStatus("Analyzing Priorities");
+
+    let round = 1;
+    let twinCurrentBid = targetPrice;
+    let vendorCurrentAsk = vendorPrice;
+
+    const assetName = assetClass === "ServerCore" ? "GPU Compute Core Node" : "Vector Database Index Shards";
+
+    const conversationFlow = [
+      {
+        sender: "twin" as const,
+        text: `Initializing handshake telemetry. Requesting access to ${assetName}. Valued at $${twinCurrentBid} based on historical sharding records. We propose immediate deal.`,
+        bidOffset: 0,
+        askOffset: 0
+      },
+      {
+        sender: "vendor" as const,
+        text: `Handshake validated. However, node capacity limits price cuts. Strict minimum boundary sits at $${vendorCurrentAsk}.`,
+        bidOffset: 0,
+        askOffset: 0
+      },
+      {
+        sender: "twin" as const,
+        text: `Evaluating quality factors. High active node strain observed. Conceding proposal to $${twinCurrentBid + 25}.`,
+        bidOffset: 25,
+        askOffset: 0
+      },
+      {
+        sender: "vendor" as const,
+        text: `Adjusting load index. Reducing ask threshold to $${vendorCurrentAsk - 30}.`,
+        bidOffset: 0,
+        askOffset: -30
+      },
+      {
+        sender: "twin" as const,
+        text: `Budget metrics constrained (Priority: ${budgetPriority}%). Final convergence proposed at $235.`,
+        bidOffset: 30,
+        askOffset: 0
+      },
+      {
+        sender: "vendor" as const,
+        text: `Agreement criteria achieved. Initializing contract seal at $235. Lock complete.`,
+        bidOffset: 0,
+        askOffset: -55
+      }
+    ];
+
+    const executeRound = () => {
+      if (round <= conversationFlow.length) {
+        const step = conversationFlow[round - 1]!;
+        setActiveStatus(`Running Round ${Math.ceil(round / 2)}`);
+
+        twinCurrentBid += step.bidOffset;
+        vendorCurrentAsk += step.askOffset;
+
+        setChatLog(prev => [...prev, {
+          sender: step.sender,
+          text: step.text,
+          round: Math.ceil(round / 2)
+        }]);
+
+        setChartData(prev => [
+          ...prev,
+          {
+            round: Math.ceil(round / 2),
+            twinBid: twinCurrentBid,
+            vendorAsk: vendorCurrentAsk
+          }
+        ]);
+
+        round++;
+        setTimeout(executeRound, 2000);
+      } else {
+        setActiveStatus("Deal Complete");
+        setNegotiating(false);
+        setSystemLogs(prev => [`[${new Date().toTimeString().split(' ')[0]}] [PROXY_NEGOTIATOR] Concluded contract for ${assetName} at $235. Savings: $${vendorPrice - 235}.`, ...prev]);
+      }
+    };
+
+    setTimeout(executeRound, 1000);
+  };
+
+  // OS Command line submission handler
+  const handleOsCommandSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const cmd = osCommand.toLowerCase().trim();
+    if (!cmd) return;
+
+    let recognized = false;
+    let feedback = "";
+
+    if (cmd.includes("negotiate") || cmd.includes("proxy")) {
+      setActiveHUDSection("NEGOTIATOR");
+      setViewMode("focus");
+      runNegotiation();
+      feedback = "Initializing Proxy Negotiator simulation...";
+      recognized = true;
+    } else if (cmd.includes("debate") || cmd.includes("arena")) {
+      setActiveHUDSection("ARENA");
+      setViewMode("focus");
+      runAgentDebate();
+      feedback = "Starting Agentic purchase debate...";
+      recognized = true;
+    } else if (cmd.includes("simulate") || cmd.includes("destiny") || cmd.includes("career")) {
+      setActiveHUDSection("DESTINY");
+      setViewMode("focus");
+      feedback = "Focussed Destiny Simulator. Adjust slider to run.";
+      recognized = true;
+    } else if (cmd.includes("twin") || cmd.includes("persona")) {
+      setActiveHUDSection("TWIN");
+      setViewMode("focus");
+      feedback = "Focussed Digital Twin configuration deck.";
+      recognized = true;
+    } else if (cmd.includes("radar") || cmd.includes("arbitrage")) {
+      setActiveHUDSection("RADAR");
+      setViewMode("focus");
+      feedback = "Focussed Live Opportunity Radar sweep.";
+      recognized = true;
+    } else if (cmd.includes("sandbox") || cmd.includes("impact")) {
+      setActiveHUDSection("SANDBOX");
+      setViewMode("focus");
+      runSandboxSimulation();
+      feedback = "Running sandbox purchase impact simulation...";
+      recognized = true;
+    } else if (cmd.includes("intel") || cmd.includes("search")) {
+      setActiveHUDSection("INTELLIGENCE");
+      setViewMode("focus");
+      const terms = cmd.split(" ");
+      const q = terms.length > 1 ? terms.slice(1).join(" ") : searchQuery;
+      if (q) {
+        setSearchQuery(q);
+        handleProductSearch(q);
+      }
+      feedback = `Crawling product intelligence for '${q || searchQuery}'...`;
+      recognized = true;
+    } else if (cmd.includes("buy") || cmd.includes("auto")) {
+      setActiveHUDSection("AUTONOMOUS");
+      setViewMode("focus");
+      dispatchAutoBuy();
+      feedback = "Authorizing auto-procurement rules...";
+      recognized = true;
+    } else if (cmd.includes("clear") || cmd.includes("reset")) {
+      setChatLog([]);
+      setArenaMessages([]);
+      feedback = "Cleared terminal buffers.";
+      recognized = true;
+    }
+
+    if (recognized) {
+      setSystemLogs(prev => [`[${new Date().toTimeString().split(' ')[0]}] [OS_SHELL] Executed: "${osCommand}". ${feedback}`, ...prev]);
+    } else {
+      setSystemLogs(prev => [`[${new Date().toTimeString().split(' ')[0]}] [OS_SHELL] Command not recognized: "${osCommand}". Try "negotiate", "debate", "search [product]", "sandbox".`, ...prev]);
+    }
+    setOsCommand("");
+  };
+
+  const renderNegotiator = () => {
+    const assetDetails = assetClass === "ServerCore" 
+      ? { name: "Futuristic GPU-Compute Core Node", icon: Cpu }
+      : { name: "Vector Database Sub-Shards Index", icon: Database };
+    const AssetIcon = assetDetails.icon;
+
+    return (
+      <section id="NEGOTIATOR" className="scroll-mt-28 w-full">
+        <div className="rounded-3xl border border-white/10 bg-slate-950/50 backdrop-blur-xl p-6 shadow-2xl flex flex-col justify-between">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between border-b border-white/5 pb-4">
+              <div className="flex items-center gap-2">
+                <div className="p-2.5 rounded-xl bg-[#00f0ff]/10 text-[#00f0ff] border border-[#00f0ff]/20">
+                  <Briefcase className="w-5 h-5" />
+                </div>
+                <div className="text-left">
+                  <h2 className="text-sm font-black uppercase tracking-wider text-white">Proxy Negotiator Playground</h2>
+                  <p className="text-[10px] text-gray-400">Train your digital twin to bargain asset prices with vendor agents</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 font-mono text-[9px] uppercase">
+                <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+                <span className="text-cyan-400">{activeStatus}</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Sliders & Configuration */}
+              <div className="space-y-4 text-left font-mono">
+                <div>
+                  <span className="block text-[8px] font-black uppercase tracking-widest text-gray-500 mb-2">Priority Vectors</span>
+                  <div className="space-y-3">
+                    <div>
+                      <div className="flex justify-between text-[10px] text-gray-400 mb-1">
+                        <span>Budget Optimization</span>
+                        <span className="text-cyan-400">{budgetPriority}%</span>
+                      </div>
+                      <input
+                        type="range"
+                        value={budgetPriority}
+                        onChange={(e) => setBudgetPriority(parseInt(e.target.value))}
+                        disabled={negotiating}
+                        className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-cyan-400"
+                      />
+                    </div>
+                    <div>
+                      <div className="flex justify-between text-[10px] text-gray-400 mb-1">
+                        <span>Quality Threshold</span>
+                        <span className="text-cyan-400">{qualityPriority}%</span>
+                      </div>
+                      <input
+                        type="range"
+                        value={qualityPriority}
+                        onChange={(e) => setQualityPriority(parseInt(e.target.value))}
+                        disabled={negotiating}
+                        className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-cyan-400"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <span className="block text-[8px] font-black uppercase tracking-widest text-gray-500 mb-1.5">Asset & Contract</span>
+                  <div className="space-y-2">
+                    <select
+                      value={assetClass}
+                      onChange={(e) => setAssetClass(e.target.value)}
+                      disabled={negotiating}
+                      className="w-full bg-[#111827] border border-white/10 rounded-xl px-3 py-2 text-xs font-bold text-white focus:outline-none focus:border-cyan-400"
+                    >
+                      <option value="ServerCore">GPU Compute Core Node</option>
+                      <option value="DataRegistry">Vector Database Index Shards</option>
+                    </select>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <span className="text-[7px] text-gray-500 block mb-0.5">Initial Ask ($)</span>
+                        <input
+                          type="number"
+                          value={vendorPrice}
+                          onChange={(e) => setVendorPrice(parseInt(e.target.value) || 0)}
+                          disabled={negotiating}
+                          className="w-full bg-[#111827] border border-white/10 rounded-xl px-3 py-1.5 text-xs font-bold text-white focus:outline-none focus:border-cyan-400"
+                        />
+                      </div>
+                      <div>
+                        <span className="text-[7px] text-gray-500 block mb-0.5">Target Bid ($)</span>
+                        <input
+                          type="number"
+                          value={targetPrice}
+                          onChange={(e) => setTargetPrice(parseInt(e.target.value) || 0)}
+                          disabled={negotiating}
+                          className="w-full bg-[#111827] border border-white/10 rounded-xl px-3 py-1.5 text-xs font-bold text-white focus:outline-none focus:border-cyan-400"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  onClick={runNegotiation}
+                  disabled={negotiating}
+                  className="w-full py-2.5 rounded-xl font-bold text-xs text-black bg-[#00f0ff] hover:bg-[#00d0df] disabled:bg-gray-800 disabled:text-gray-500 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-[0_0_15px_rgba(0,240,255,0.2)] font-mono"
+                >
+                  {negotiating ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4 fill-black" />}
+                  {negotiating ? "Running Negotiations" : "Launch Proxy Agent"}
+                </button>
+              </div>
+
+              {/* Terminal Logs & Chart */}
+              <div className="space-y-4">
+                <div className="border border-white/5 bg-black/60 rounded-2xl overflow-hidden flex flex-col h-44">
+                  <div className="bg-[#111827] px-3 py-1.5 border-b border-white/5 flex items-center justify-between font-mono text-[8px]">
+                    <span className="text-gray-400">PROX_NEGOTIATOR_SHELL v1.42</span>
+                    <span className="text-cyan-400">{activeStatus}</span>
+                  </div>
+                  <div className="flex-1 overflow-y-auto p-3 space-y-2.5 font-mono text-[9px] custom-scrollbar">
+                    {chatLog.length === 0 && !negotiating ? (
+                      <div className="h-full flex flex-col items-center justify-center text-center text-gray-600">
+                        <Cpu className="w-6 h-6 mb-1 animate-pulse" />
+                        <span>Console ready. Click Launch.</span>
+                      </div>
+                    ) : (
+                      chatLog.map((log, index) => (
+                        <div key={index} className={`p-2 rounded bg-white/5 border border-white/5 text-left`}>
+                          <div className="flex justify-between border-b border-white/5 pb-0.5 mb-1 font-bold">
+                            <span className={log.sender === "twin" ? "text-cyan-400" : "text-rose-400"}>
+                              {log.sender === "twin" ? "PROX_TWIN" : "VENDOR_NODE"}
+                            </span>
+                            <span className="text-gray-500">Round {log.round}</span>
+                          </div>
+                          <p className="text-gray-300">{log.text}</p>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+                <div className="h-28 bg-[#111827]/40 p-2 rounded-2xl border border-white/5">
+                  <span className="text-[8px] font-mono text-gray-500 uppercase tracking-widest block mb-1 text-left">Convergence Map</span>
+                  {mounted && chartData.length > 0 ? (
+                    <ResponsiveContainer width="100%" height="80%">
+                      <LineChart data={chartData} margin={{ top: 0, right: 5, left: -25, bottom: 0 }}>
+                        <CartesianGrid stroke="#1f2937" strokeDasharray="3 3" />
+                        <XAxis dataKey="round" stroke="#4b5563" fontSize={7} />
+                        <YAxis stroke="#4b5563" fontSize={7} />
+                        <Line type="monotone" dataKey="twinBid" stroke="#00f0ff" strokeWidth={2} dot={false} />
+                        <Line type="monotone" dataKey="vendorAsk" stroke="#ef4444" strokeWidth={2} dot={false} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="h-full flex items-center justify-center text-[9px] font-mono text-gray-600">
+                      Convergence chart ready to plot...
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  };
+
   return (
     <main className="w-full bg-[#030712] min-h-screen text-white font-sans flex flex-col relative overflow-x-hidden">
-      {/* Three.js Holographic Ambient Background */}
-      {mounted && <Scene />}
-
       {/* Top Navbar */}
       <NavBar />
 
@@ -378,6 +712,7 @@ export default function Home() {
               { id: "COMMAND", label: "Command Center", icon: Terminal },
               { id: "INTELLIGENCE", label: "Product Intel", icon: Search },
               { id: "ARENA", label: "Agent Arena", icon: MessageSquare },
+              { id: "NEGOTIATOR", label: "Proxy Negotiator", icon: Briefcase },
               { id: "DESTINY", label: "Destiny Simulator", icon: GitBranch },
               { id: "TWIN", label: "Digital Twin Lab", icon: UserCheck },
               { id: "RADAR", label: "Opportunity Radar", icon: Compass },
@@ -393,7 +728,11 @@ export default function Home() {
                   key={sec.id}
                   onClick={() => {
                     setActiveHUDSection(sec.id);
-                    document.getElementById(sec.id)?.scrollIntoView({ behavior: "smooth", block: "center" });
+                    if (viewMode === "unified") {
+                      setTimeout(() => {
+                        document.getElementById(sec.id)?.scrollIntoView({ behavior: "smooth", block: "center" });
+                      }, 50);
+                    }
                   }}
                   className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-[11px] font-bold uppercase tracking-wider transition-all border text-left flex-shrink-0 cursor-pointer ${
                     isActive
@@ -412,6 +751,66 @@ export default function Home() {
         {/* HUD CONTENT BOARD */}
         <div className="flex-1 space-y-8 min-w-0">
           
+          {/* STICKY SUB-NAVBAR FOR MODULE SELECT */}
+          <div className="sticky top-[72px] z-30 bg-[#0c1020]/95 backdrop-blur-md border border-white/10 p-3 rounded-2xl shadow-[0_10px_35px_rgba(0,0,0,0.6)] flex flex-col md:flex-row gap-4 items-center justify-between">
+            <div className="flex items-center gap-3 overflow-x-auto scrollbar-none w-full md:w-auto flex-nowrap py-1">
+              {[
+                { id: "COMMAND", label: "Command Center", icon: Terminal, color: "text-cyan-400 bg-cyan-400/10 border-cyan-400/20" },
+                { id: "INTELLIGENCE", label: "Product Intel", icon: Search, color: "text-cyan-400 bg-cyan-400/10 border-cyan-400/20" },
+                { id: "ARENA", label: "Agent Arena", icon: MessageSquare, color: "text-amber-400 bg-amber-400/10 border-amber-400/20" },
+                { id: "NEGOTIATOR", label: "Proxy Negotiator", icon: Briefcase, color: "text-[#00f0ff] bg-[#00f0ff]/10 border-[#00f0ff]/20" },
+                { id: "DESTINY", label: "Destiny", icon: GitBranch, color: "text-purple-400 bg-purple-400/10 border-purple-400/20" },
+                { id: "TWIN", label: "Twin Lab", icon: UserCheck, color: "text-emerald-400 bg-emerald-400/10 border-emerald-400/20" },
+                { id: "RADAR", label: "Opportunity Radar", icon: Compass, color: "text-cyan-400 bg-cyan-400/10 border-cyan-400/20" },
+                { id: "SANDBOX", label: "Reality Sandbox", icon: Layers, color: "text-indigo-400 bg-indigo-400/10 border-indigo-400/20" },
+                { id: "GLOBAL", label: "Global Radar", icon: Globe2, color: "text-sky-400 bg-sky-400/10 border-sky-400/20" },
+                { id: "AUTONOMOUS", label: "Auto-Shopping", icon: Cpu, color: "text-rose-400 bg-rose-400/10 border-rose-400/20" },
+                { id: "FEED", label: "System Alerts", icon: AlertCircle, color: "text-red-400 bg-red-400/10 border-red-400/20" }
+              ].map(sec => {
+                const Icon = sec.icon;
+                const isActive = activeHUDSection === sec.id;
+                return (
+                  <button
+                    key={sec.id}
+                    onClick={() => {
+                      setActiveHUDSection(sec.id);
+                      if (viewMode === "unified") {
+                        setTimeout(() => {
+                          document.getElementById(sec.id)?.scrollIntoView({ behavior: "smooth", block: "center" });
+                        }, 50);
+                      }
+                    }}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all border flex-shrink-0 cursor-pointer ${
+                      isActive
+                        ? `${sec.color} shadow-lg scale-105`
+                        : "bg-transparent border-transparent text-gray-400 hover:bg-white/5 hover:text-white"
+                    }`}
+                  >
+                    <Icon className="w-3 h-3" />
+                    <span>{sec.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* View Mode Toggle Switch */}
+            <div className="flex items-center gap-1.5 bg-black/60 p-1 rounded-xl border border-white/5 shrink-0 font-mono text-[9px] w-full md:w-auto justify-center">
+              <span className="text-gray-500 uppercase tracking-wider font-bold mr-1 select-none">View:</span>
+              <button
+                onClick={() => setViewMode("focus")}
+                className={`px-2.5 py-1 rounded-lg font-bold transition-all cursor-pointer ${viewMode === "focus" ? "bg-cyan-500 text-black shadow-md font-mono" : "text-gray-400 hover:text-white"}`}
+              >
+                Focus Mode
+              </button>
+              <button
+                onClick={() => setViewMode("unified")}
+                className={`px-2.5 py-1 rounded-lg font-bold transition-all cursor-pointer ${viewMode === "unified" ? "bg-cyan-500 text-black shadow-md font-mono" : "text-gray-400 hover:text-white"}`}
+              >
+                Unified (Scroll)
+              </button>
+            </div>
+          </div>
+
           {/* SECTION 2: AI COMMAND CENTER (HERO VIEW) */}
           <section id="COMMAND" className="scroll-mt-28">
             <div className="relative overflow-hidden rounded-3xl border border-cyan-500/20 bg-slate-900/40 backdrop-blur-xl p-6 md:p-8 shadow-[0_0_50px_rgba(6,182,212,0.05)]">
@@ -457,6 +856,34 @@ export default function Home() {
                   </div>
                 </div>
 
+                {/* OS COMMAND INPUT BAR */}
+                <div className="mt-6">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Terminal className="w-4 h-4 text-[#ff9900]" />
+                    <h4 className="text-[10px] font-black uppercase tracking-widest text-[#ff9900] font-mono">
+                      Autonomous OS Terminal Shell
+                    </h4>
+                  </div>
+                  <form onSubmit={handleOsCommandSubmit} className="flex gap-2">
+                    <div className="flex-1 relative flex items-center">
+                      <span className="absolute left-4 text-cyan-400 font-mono text-xs select-none">&gt;</span>
+                      <input
+                        type="text"
+                        value={osCommand}
+                        onChange={(e) => setOsCommand(e.target.value)}
+                        placeholder="Type system commands here... (e.g. 'negotiate data', 'debate phone', 'search laptops', 'sandbox', 'clear')"
+                        className="w-full bg-black/60 border border-cyan-500/20 hover:border-cyan-500/40 rounded-xl py-3 pl-8 pr-4 text-xs font-mono text-cyan-400 focus:outline-none focus:border-cyan-400/80 placeholder:text-cyan-900"
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      className="px-6 rounded-xl text-xs font-bold font-mono tracking-wider transition-all bg-gradient-to-r from-cyan-400 to-indigo-500 hover:from-cyan-500 hover:to-indigo-600 text-black cursor-pointer shadow-[0_0_15px_rgba(6,182,212,0.3)] shrink-0"
+                    >
+                      EXEC
+                    </button>
+                  </form>
+                </div>
+
                 {/* System logs feed console */}
                 <div className="mt-6">
                   <div className="flex items-center gap-2 mb-3">
@@ -477,730 +904,765 @@ export default function Home() {
           </section>
 
           {/* TWO-COLUMN GRID OF FUNCTION WIDGETS */}
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-            
-            {/* MODULE 1: UNIVERSAL PRODUCT INTELLIGENCE ENGINE */}
-            <section id="INTELLIGENCE" className="scroll-mt-28">
-              <div className="rounded-3xl border border-white/10 bg-slate-950/50 backdrop-blur-xl p-6 shadow-2xl h-full flex flex-col justify-between">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="p-2.5 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
-                        <Search className="w-5 h-5" />
+          {(viewMode === "unified" || activeHUDSection === "INTELLIGENCE" || activeHUDSection === "ARENA") && (
+            <div className={viewMode === "focus" ? "w-full max-w-4xl mx-auto" : "grid grid-cols-1 xl:grid-cols-2 gap-8"}>
+              
+              {/* MODULE 1: UNIVERSAL PRODUCT INTELLIGENCE ENGINE */}
+              {(viewMode === "unified" || activeHUDSection === "INTELLIGENCE") && (
+                <section id="INTELLIGENCE" className="scroll-mt-28">
+                  <div className="rounded-3xl border border-white/10 bg-slate-950/50 backdrop-blur-xl p-6 shadow-2xl h-full flex flex-col justify-between">
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="p-2.5 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                            <Search className="w-5 h-5" />
+                          </div>
+                          <div className="text-left">
+                            <h2 className="text-sm font-black uppercase tracking-wider text-white">Universal Product Intelligence</h2>
+                            <p className="text-[10px] text-gray-400">Search globally across Amazon, Flipkart, Myntra, Croma, Nexus</p>
+                          </div>
+                        </div>
                       </div>
-                      <div className="text-left">
-                        <h2 className="text-sm font-black uppercase tracking-wider text-white">Universal Product Intelligence</h2>
-                        <p className="text-[10px] text-gray-400">Search globally across Amazon, Flipkart, Myntra, Croma, Nexus</p>
+
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          placeholder="Enter product keyword (e.g. Phone, Laptop)"
+                          className="flex-1 bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-xs focus:outline-none focus:border-cyan-500 text-white font-mono"
+                        />
+                        <button
+                          onClick={() => handleProductSearch(searchQuery)}
+                          disabled={isSearching}
+                          className="bg-cyan-500 hover:bg-cyan-600 text-black px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1 cursor-pointer shrink-0"
+                        >
+                          {isSearching ? "Crawling..." : "Inspect Engine"}
+                        </button>
+                      </div>
+
+                      {searchReport && (
+                        <div className="space-y-4 pt-2 text-left">
+                          <div className="flex items-center justify-between border-b border-white/5 pb-2">
+                            <h3 className="text-xs font-bold text-cyan-400 uppercase truncate max-w-[70%]">{searchReport.product.name}</h3>
+                            <span className="text-[10px] bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 px-2.5 py-0.5 rounded-full font-mono font-bold">
+                              AI SCORE: {searchReport.aiScore}%
+                            </span>
+                          </div>
+
+                          {/* Retailer price rows */}
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+                            {[
+                              { name: "Nexus Buy", price: `$${searchReport.nexusPrice}`, color: "text-emerald-400 border-emerald-500/20 bg-emerald-500/5 font-black" },
+                              { name: "Amazon", price: `$${searchReport.amazonPrice}`, color: "text-gray-400 border-white/5 bg-white/5" },
+                              { name: "Flipkart", price: `$${searchReport.flipkartPrice}`, color: "text-gray-400 border-white/5 bg-white/5" },
+                              { name: "Croma Retail", price: `$${searchReport.reliancePrice}`, color: "text-gray-400 border-white/5 bg-white/5" }
+                            ].map((ret, rIdx) => (
+                              <div key={rIdx} className={`p-2.5 rounded-xl border ${ret.color} flex flex-col justify-center`}>
+                                <span className="text-[9px] text-gray-500 uppercase tracking-wider">{ret.name}</span>
+                                <span className="text-xs mt-1">{ret.price}</span>
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* Drop probability & prediction graph */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+                            <div className="bg-black/30 p-3 rounded-xl border border-white/5 flex items-center justify-between font-mono">
+                              <div>
+                                <span className="text-[8px] text-gray-500 uppercase tracking-widest block block">Drop Probability</span>
+                                <span className="text-base font-black text-amber-500">{searchReport.dropChance}%</span>
+                              </div>
+                              <div className="text-right">
+                                <span className="text-[8px] text-gray-500 uppercase tracking-widest block block">Expected within</span>
+                                <span className="text-xs text-white">{searchReport.dropTime}</span>
+                              </div>
+                            </div>
+
+                            {/* Recharts graph */}
+                            <div className="h-[90px] w-full">
+                              {mounted && (
+                                <ResponsiveContainer width="100%" height="100%">
+                                  <AreaChart data={searchReport.priceHistory} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
+                                    <defs>
+                                      <linearGradient id="priceGlow" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.3}/>
+                                        <stop offset="95%" stopColor="#06b6d4" stopOpacity={0}/>
+                                      </linearGradient>
+                                    </defs>
+                                    <XAxis dataKey="month" tick={{ fill: "#6b7280", fontSize: 8 }} />
+                                    <YAxis tick={{ fill: "#6b7280", fontSize: 8 }} />
+                                    <Tooltip contentStyle={{ background: "#0f172a", border: "1px solid rgba(255,255,255,0.1)", fontSize: 10 }} />
+                                    <Area type="monotone" dataKey="price" stroke="#06b6d4" fillOpacity={1} fill="url(#priceGlow)" />
+                                  </AreaChart>
+                                </ResponsiveContainer>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="bg-slate-900/60 p-3 rounded-xl border border-cyan-500/10 text-[10px] text-gray-300 leading-relaxed font-mono">
+                            <span className="text-[9px] font-black uppercase text-cyan-400 tracking-wider block mb-1">COGNITIVE RECOMMENDATION OVERVIEW:</span>
+                            {searchReport.aiVerdict}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {searchReport && (
+                      <div className="pt-4 border-t border-white/5 flex items-center justify-end gap-3 mt-4">
+                        <Link
+                          href={`/product/${searchReport.product._id}`}
+                          className="px-4 py-2 border border-white/10 hover:border-white/30 text-white rounded-xl text-[10px] font-bold uppercase tracking-wider transition-colors"
+                        >
+                          Specifications Report
+                        </Link>
+                        <button
+                          onClick={() => {
+                            dispatch(addToCart({
+                              id: searchReport.product._id,
+                              name: searchReport.product.name,
+                              price: searchReport.nexusPrice,
+                              quantity: 1,
+                              image: searchReport.product.images?.[0] || ""
+                            }));
+                            alert("Added to cart.");
+                          }}
+                          className="px-4 py-2 bg-gradient-to-r from-cyan-400 to-indigo-500 hover:from-cyan-500 hover:to-indigo-600 text-black font-black rounded-xl text-[10px] font-mono uppercase tracking-wider transition-all"
+                        >
+                          Instant Procure
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </section>
+              )}
+
+              {/* MODULE 3: AGENT BATTLE ARENA */}
+              {(viewMode === "unified" || activeHUDSection === "ARENA") && (
+                <section id="ARENA" className="scroll-mt-28">
+                  <div className="rounded-3xl border border-white/10 bg-slate-950/50 backdrop-blur-xl p-6 shadow-2xl h-full flex flex-col justify-between">
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                            <MessageSquare className="w-5 h-5" />
+                          </div>
+                          <div className="text-left">
+                            <h2 className="text-sm font-black uppercase tracking-wider text-white">Agentic purchase Battle Arena</h2>
+                            <p className="text-[10px] text-gray-400">Launch real-time debates between five specialized agents</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={arenaQuery}
+                          onChange={(e) => setArenaQuery(e.target.value)}
+                          placeholder="Define purchase target"
+                          className="flex-1 bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-xs focus:outline-none focus:border-amber-500 text-white font-mono"
+                        />
+                        <button
+                          onClick={runAgentDebate}
+                          disabled={isDebating}
+                          className="bg-amber-500 hover:bg-amber-600 text-black px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1 cursor-pointer shrink-0"
+                        >
+                          {isDebating ? "Debating..." : "Orchestrate Arena"}
+                        </button>
+                      </div>
+
+                      {/* Consensus Meter */}
+                      <div className="bg-black/40 p-3.5 rounded-2xl border border-white/5 text-left font-mono">
+                        <div className="flex justify-between items-center text-[9px] text-gray-500 uppercase mb-1.5 font-bold">
+                          <span>PURCHASE Consensus Rating</span>
+                          <span className={`${consensusScore > 65 ? "text-emerald-400 animate-pulse" : "text-amber-500"}`}>{consensusScore}% Approval</span>
+                        </div>
+                        <div className="w-full bg-white/5 h-2 rounded-full overflow-hidden border border-white/5">
+                          <motion.div
+                            className="h-full bg-gradient-to-r from-amber-500 to-emerald-400"
+                            animate={{ width: `${consensusScore}%` }}
+                            transition={{ duration: 0.8 }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Arena messages log */}
+                      <div className="space-y-3 max-h-[220px] overflow-y-auto custom-scrollbar p-1 text-left font-mono">
+                        <AnimatePresence>
+                          {arenaMessages.map((msg, idx) => (
+                            <motion.div
+                              key={idx}
+                              initial={{ opacity: 0, x: -10 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              className={`p-3 rounded-2xl border text-[10px] leading-relaxed ${msg.color}`}
+                            >
+                              <div className="font-black text-[9px] uppercase mb-1 flex items-center gap-1">
+                                <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                                {msg.agent}
+                              </div>
+                              <div>{msg.text}</div>
+                            </motion.div>
+                          ))}
+                        </AnimatePresence>
+                        {isDebating && (
+                          <div className="flex items-center gap-1.5 text-[9px] text-gray-500 uppercase tracking-widest pl-2">
+                            <Zap className="w-3.5 h-3.5 animate-spin" />
+                            <span>Agents formulating rebuttals...</span>
+                          </div>
+                        )}
+                        {arenaMessages.length === 0 && !isDebating && (
+                          <div className="text-[10px] text-gray-600 text-center py-8">
+                            Define purchase above and orchestrate to launch agent audit stream.
+                          </div>
+                        )}
                       </div>
                     </div>
-                  </div>
 
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="Enter product keyword (e.g. Phone, Laptop)"
-                      className="flex-1 bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-xs focus:outline-none focus:border-cyan-500 text-white font-mono"
-                    />
-                    <button
-                      onClick={() => handleProductSearch(searchQuery)}
-                      disabled={isSearching}
-                      className="bg-cyan-500 hover:bg-cyan-600 text-black px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1 cursor-pointer shrink-0"
-                    >
-                      {isSearching ? "Crawling..." : "Inspect Engine"}
-                    </button>
+                    {arenaMessages.length > 0 && !isDebating && (
+                      <div className="pt-4 border-t border-white/5 flex items-center justify-between text-[10px] font-mono text-gray-500 mt-4">
+                        <span>Audit complete. Consensus Converged.</span>
+                        <button
+                          onClick={() => setArenaMessages([])}
+                          className="text-red-400 hover:underline cursor-pointer"
+                        >
+                          Clear Arena
+                        </button>
+                      </div>
+                    )}
                   </div>
+                </section>
+              )}
 
-                  {searchReport && (
-                    <div className="space-y-4 pt-2 text-left">
-                      <div className="flex items-center justify-between border-b border-white/5 pb-2">
-                        <h3 className="text-xs font-bold text-cyan-400 uppercase truncate max-w-[70%]">{searchReport.product.name}</h3>
-                        <span className="text-[10px] bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 px-2.5 py-0.5 rounded-full font-mono font-bold">
-                          AI SCORE: {searchReport.aiScore}%
-                        </span>
+            </div>
+          )}
+
+          {/* MODULE: PROXY NEGOTIATOR PLAYGROUND */}
+          {(viewMode === "unified" || activeHUDSection === "NEGOTIATOR") && (
+            <div className="w-full max-w-4xl mx-auto">
+              {renderNegotiator()}
+            </div>
+          )}
+
+          {/* SIMULATION & HORIZONS ROW */}
+          {(viewMode === "unified" || activeHUDSection === "DESTINY" || activeHUDSection === "TWIN") && (
+            <div className={viewMode === "focus" ? "w-full max-w-4xl mx-auto" : "grid grid-cols-1 xl:grid-cols-2 gap-8"}>
+              
+              {/* MODULE 4: FUTURE SELF SIMULATOR */}
+              {(viewMode === "unified" || activeHUDSection === "DESTINY") && (
+                <section id="DESTINY" className="scroll-mt-28">
+                  <div className="rounded-3xl border border-white/10 bg-slate-950/50 backdrop-blur-xl p-6 shadow-2xl h-full flex flex-col justify-between">
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="p-2.5 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                            <GitBranch className="w-5 h-5" />
+                          </div>
+                          <div className="text-left">
+                            <h2 className="text-sm font-black uppercase tracking-wider text-white">Future Self Destiny Simulator</h2>
+                            <p className="text-[10px] text-gray-400">Slide timeline to project career growth and required purchases</p>
+                          </div>
+                        </div>
                       </div>
 
-                      {/* Retailer price rows */}
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
-                        {[
-                          { name: "Nexus Buy", price: `$${searchReport.nexusPrice}`, color: "text-emerald-400 border-emerald-500/20 bg-emerald-500/5 font-black" },
-                          { name: "Amazon", price: `$${searchReport.amazonPrice}`, color: "text-gray-400 border-white/5 bg-white/5" },
-                          { name: "Flipkart", price: `$${searchReport.flipkartPrice}`, color: "text-gray-400 border-white/5 bg-white/5" },
-                          { name: "Croma Retail", price: `$${searchReport.reliancePrice}`, color: "text-gray-400 border-white/5 bg-white/5" }
-                        ].map((ret, rIdx) => (
-                          <div key={rIdx} className={`p-2.5 rounded-xl border ${ret.color} flex flex-col justify-center`}>
-                            <span className="text-[9px] text-gray-500 uppercase tracking-wider">{ret.name}</span>
-                            <span className="text-xs mt-1">{ret.price}</span>
-                          </div>
-                        ))}
+                      {/* Year slider slider */}
+                      <div className="bg-black/30 p-4 rounded-2xl border border-white/5 text-left font-mono">
+                        <div className="flex justify-between items-center text-[10px] text-gray-400 mb-2">
+                          <span>Timeline projection shift</span>
+                          <span className="text-purple-400 font-bold">Year: {simulatorData.year} (+{timelineValue} Years)</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="0"
+                          max="25"
+                          value={timelineValue}
+                          onChange={(e) => handleTimelineChange(parseInt(e.target.value))}
+                          className="w-full h-1.5 bg-white/5 rounded-lg appearance-none cursor-pointer accent-purple-500"
+                        />
                       </div>
 
-                      {/* Drop probability & prediction graph */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-                        <div className="bg-black/30 p-3 rounded-xl border border-white/5 flex items-center justify-between font-mono">
-                          <div>
-                            <span className="text-[8px] text-gray-500 uppercase tracking-widest block">Drop Probability</span>
-                            <span className="text-base font-black text-amber-500">{searchReport.dropChance}%</span>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left font-mono">
+                        {/* Projection Details */}
+                        <div className="space-y-3">
+                          <div className="bg-slate-900/60 p-3 rounded-2xl border border-white/5">
+                            <span className="text-[8px] text-gray-500 uppercase tracking-widest block mb-0.5">Projected Career Title</span>
+                            <span className="text-xs font-bold text-purple-400">{simulatorData.career}</span>
                           </div>
-                          <div className="text-right">
-                            <span className="text-[8px] text-gray-500 uppercase tracking-widest block">Expected within</span>
-                            <span className="text-xs text-white">{searchReport.dropTime}</span>
+
+                          <div className="bg-slate-900/60 p-3 rounded-2xl border border-white/5">
+                            <span className="text-[8px] text-gray-500 uppercase tracking-widest block mb-1">Required Skill Nodes</span>
+                            <div className="flex flex-wrap gap-1.5">
+                              {simulatorData.skills.map((sk: string, sIdx: number) => (
+                                <span key={sIdx} className="text-[8px] bg-purple-500/10 text-purple-400 border border-purple-500/20 px-2 py-0.5 rounded-full font-bold">
+                                  {sk}
+                                </span>
+                              ))}
+                            </div>
                           </div>
                         </div>
 
-                        {/* Recharts graph */}
-                        <div className="h-[90px] w-full">
+                        {/* Chart mapping timeline */}
+                        <div className="h-[120px] bg-black/30 p-3 rounded-2xl border border-white/5">
+                          <span className="text-[8px] text-gray-500 uppercase tracking-widest block mb-1">Projected net worth trajectory ($k)</span>
                           {mounted && (
-                            <ResponsiveContainer width="100%" height="100%">
-                              <AreaChart data={searchReport.priceHistory} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
-                                <defs>
-                                  <linearGradient id="priceGlow" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.3}/>
-                                    <stop offset="95%" stopColor="#06b6d4" stopOpacity={0}/>
-                                  </linearGradient>
-                                </defs>
-                                <XAxis dataKey="month" tick={{ fill: "#6b7280", fontSize: 8 }} />
-                                <YAxis tick={{ fill: "#6b7280", fontSize: 8 }} />
-                                <Tooltip contentStyle={{ background: "#0f172a", border: "1px solid rgba(255,255,255,0.1)", fontSize: 10 }} />
-                                <Area type="monotone" dataKey="price" stroke="#06b6d4" fillOpacity={1} fill="url(#priceGlow)" />
-                              </AreaChart>
+                            <ResponsiveContainer width="100%" height="85%">
+                              <LineChart data={simulatorData.graph}>
+                                <XAxis dataKey="name" stroke="#6b7280" fontSize={8} />
+                                <Tooltip contentStyle={{ background: "#0f172a", border: "1px solid rgba(255,255,255,0.1)", fontSize: 9 }} />
+                                <Line type="monotone" dataKey="worth" stroke="#a855f7" strokeWidth={2} dot={{ fill: "#a855f7" }} />
+                              </LineChart>
                             </ResponsiveContainer>
                           )}
                         </div>
                       </div>
 
-                      <div className="bg-slate-900/60 p-3 rounded-xl border border-cyan-500/10 text-[10px] text-gray-300 leading-relaxed font-mono">
-                        <span className="text-[9px] font-black uppercase text-cyan-400 tracking-wider block mb-1">COGNITIVE RECOMMENDATION OVERVIEW:</span>
-                        {searchReport.aiVerdict}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {searchReport && (
-                  <div className="pt-4 border-t border-white/5 flex items-center justify-end gap-3 mt-4">
-                    <Link
-                      href={`/product/${searchReport.product._id}`}
-                      className="px-4 py-2 border border-white/10 hover:border-white/30 text-white rounded-xl text-[10px] font-bold uppercase tracking-wider transition-colors"
-                    >
-                      Specifications Report
-                    </Link>
-                    <button
-                      onClick={() => {
-                        dispatch(addToCart({
-                          id: searchReport.product._id,
-                          name: searchReport.product.name,
-                          price: searchReport.nexusPrice,
-                          quantity: 1,
-                          image: searchReport.product.images?.[0] || ""
-                        }));
-                        alert("Added to cart.");
-                      }}
-                      className="px-4 py-2 bg-gradient-to-r from-cyan-400 to-indigo-500 hover:from-cyan-500 hover:to-indigo-600 text-black font-black rounded-xl text-[10px] font-mono uppercase tracking-wider transition-all"
-                    >
-                      Instant Procure
-                    </button>
-                  </div>
-                )}
-              </div>
-            </section>
-
-            {/* MODULE 3: AGENT BATTLE ARENA */}
-            <section id="ARENA" className="scroll-mt-28">
-              <div className="rounded-3xl border border-white/10 bg-slate-950/50 backdrop-blur-xl p-6 shadow-2xl h-full flex flex-col justify-between">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                        <MessageSquare className="w-5 h-5" />
-                      </div>
-                      <div className="text-left">
-                        <h2 className="text-sm font-black uppercase tracking-wider text-white">Agentic purchase Battle Arena</h2>
-                        <p className="text-[10px] text-gray-400">Launch real-time debates between five specialized agents</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={arenaQuery}
-                      onChange={(e) => setArenaQuery(e.target.value)}
-                      placeholder="Define purchase target"
-                      className="flex-1 bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-xs focus:outline-none focus:border-amber-500 text-white font-mono"
-                    />
-                    <button
-                      onClick={runAgentDebate}
-                      disabled={isDebating}
-                      className="bg-amber-500 hover:bg-amber-600 text-black px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1 cursor-pointer shrink-0"
-                    >
-                      {isDebating ? "Debating..." : "Orchestrate Arena"}
-                    </button>
-                  </div>
-
-                  {/* Consensus Meter */}
-                  <div className="bg-black/40 p-3.5 rounded-2xl border border-white/5 text-left font-mono">
-                    <div className="flex justify-between items-center text-[9px] text-gray-500 uppercase mb-1.5 font-bold">
-                      <span>PURCHASE Consensus Rating</span>
-                      <span className={`${consensusScore > 65 ? "text-emerald-400 animate-pulse" : "text-amber-500"}`}>{consensusScore}% Approval</span>
-                    </div>
-                    <div className="w-full bg-white/5 h-2 rounded-full overflow-hidden border border-white/5">
-                      <motion.div
-                        className="h-full bg-gradient-to-r from-amber-500 to-emerald-400"
-                        animate={{ width: `${consensusScore}%` }}
-                        transition={{ duration: 0.8 }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Arena messages log */}
-                  <div className="space-y-3 max-h-[220px] overflow-y-auto custom-scrollbar p-1 text-left font-mono">
-                    <AnimatePresence>
-                      {arenaMessages.map((msg, idx) => (
-                        <motion.div
-                          key={idx}
-                          initial={{ opacity: 0, x: -10 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          className={`p-3 rounded-2xl border text-[10px] leading-relaxed ${msg.color}`}
-                        >
-                          <div className="font-black text-[9px] uppercase mb-1 flex items-center gap-1">
-                            <span className="w-1.5 h-1.5 rounded-full bg-current" />
-                            {msg.agent}
-                          </div>
-                          <div>{msg.text}</div>
-                        </motion.div>
-                      ))}
-                    </AnimatePresence>
-                    {isDebating && (
-                      <div className="flex items-center gap-1.5 text-[9px] text-gray-500 uppercase tracking-widest pl-2">
-                        <Zap className="w-3.5 h-3.5 animate-spin" />
-                        <span>Agents formulating rebuttals...</span>
-                      </div>
-                    )}
-                    {arenaMessages.length === 0 && !isDebating && (
-                      <div className="text-[10px] text-gray-600 text-center py-8">
-                        Define purchase above and orchestrate to launch agent audit stream.
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {arenaMessages.length > 0 && !isDebating && (
-                  <div className="pt-4 border-t border-white/5 flex items-center justify-between text-[10px] font-mono text-gray-500 mt-4">
-                    <span>Audit complete. Consensus Converged.</span>
-                    <button
-                      onClick={() => setArenaMessages([])}
-                      className="text-red-400 hover:underline cursor-pointer"
-                    >
-                      Clear Arena
-                    </button>
-                  </div>
-                )}
-              </div>
-            </section>
-
-          </div>
-
-          {/* SIMULATION & HORIZONS ROW */}
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-            
-            {/* MODULE 4: FUTURE SELF SIMULATOR */}
-            <section id="DESTINY" className="scroll-mt-28">
-              <div className="rounded-3xl border border-white/10 bg-slate-950/50 backdrop-blur-xl p-6 shadow-2xl h-full flex flex-col justify-between">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="p-2.5 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20">
-                        <GitBranch className="w-5 h-5" />
-                      </div>
-                      <div className="text-left">
-                        <h2 className="text-sm font-black uppercase tracking-wider text-white">Future Self Destiny Simulator</h2>
-                        <p className="text-[10px] text-gray-400">Slide timeline to project career growth and required purchases</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Year slider slider */}
-                  <div className="bg-black/30 p-4 rounded-2xl border border-white/5 text-left font-mono">
-                    <div className="flex justify-between items-center text-[10px] text-gray-400 mb-2">
-                      <span>Timeline projection shift</span>
-                      <span className="text-purple-400 font-bold">Year: {simulatorData.year} (+{timelineValue} Years)</span>
-                    </div>
-                    <input
-                      type="range"
-                      min="0"
-                      max="25"
-                      value={timelineValue}
-                      onChange={(e) => handleTimelineChange(parseInt(e.target.value))}
-                      className="w-full h-1.5 bg-white/5 rounded-lg appearance-none cursor-pointer accent-purple-500"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left font-mono">
-                    {/* Projection Details */}
-                    <div className="space-y-3">
-                      <div className="bg-slate-900/60 p-3 rounded-2xl border border-white/5">
-                        <span className="text-[8px] text-gray-500 uppercase tracking-widest block mb-0.5">Projected Career Title</span>
-                        <span className="text-xs font-bold text-purple-400">{simulatorData.career}</span>
-                      </div>
-
-                      <div className="bg-slate-900/60 p-3 rounded-2xl border border-white/5">
-                        <span className="text-[8px] text-gray-500 uppercase tracking-widest block mb-1">Required Skill Nodes</span>
-                        <div className="flex flex-wrap gap-1.5">
-                          {simulatorData.skills.map((sk: string, sIdx: number) => (
-                            <span key={sIdx} className="text-[8px] bg-purple-500/10 text-purple-400 border border-purple-500/20 px-2 py-0.5 rounded-full font-bold">
-                              {sk}
-                            </span>
+                      {/* Procurements list */}
+                      <div className="text-left font-mono">
+                        <span className="text-[8px] text-gray-500 uppercase tracking-widest block mb-2">Required physical resource acquisitions:</span>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {simulatorData.procurements.map((proc: any, pIdx: number) => (
+                            <div key={pIdx} className="p-3 bg-slate-900/50 rounded-2xl border border-purple-500/10 flex justify-between items-center group">
+                              <div>
+                                <span className="text-[10px] font-bold text-white block group-hover:text-purple-400 transition-colors">{proc.name}</span>
+                                <span className="text-[8px] text-gray-500">{proc.desc}</span>
+                              </div>
+                              <button
+                                onClick={() => handleAddProcurement(proc)}
+                                className="bg-purple-500/10 border border-purple-500/30 text-purple-400 hover:bg-purple-500 hover:text-black p-2 rounded-xl text-[10px] font-black transition-all cursor-pointer flex items-center justify-center gap-1 font-mono"
+                              >
+                                {proc.price} <ShoppingBag className="w-3 h-3" />
+                              </button>
+                            </div>
                           ))}
                         </div>
                       </div>
                     </div>
 
-                    {/* Chart mapping timeline */}
-                    <div className="h-[120px] bg-black/30 p-3 rounded-2xl border border-white/5">
-                      <span className="text-[8px] text-gray-500 uppercase tracking-widest block mb-1">Projected net worth trajectory ($k)</span>
-                      {mounted && (
-                        <ResponsiveContainer width="100%" height="85%">
-                          <LineChart data={simulatorData.graph}>
-                            <XAxis dataKey="name" stroke="#6b7280" fontSize={8} />
-                            <Tooltip contentStyle={{ background: "#0f172a", border: "1px solid rgba(255,255,255,0.1)", fontSize: 9 }} />
-                            <Line type="monotone" dataKey="worth" stroke="#a855f7" strokeWidth={2} dot={{ fill: "#a855f7" }} />
-                          </LineChart>
-                        </ResponsiveContainer>
-                      )}
+                    <div className="pt-4 border-t border-white/5 text-[9px] font-mono text-gray-500 text-left mt-4">
+                      Adjust slider to dynamically vector life projections.
                     </div>
                   </div>
+                </section>
+              )}
 
-                  {/* Procurements list */}
-                  <div className="text-left font-mono">
-                    <span className="text-[8px] text-gray-500 uppercase tracking-widest block mb-2">Required physical resource acquisitions:</span>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {simulatorData.procurements.map((proc: any, pIdx: number) => (
-                        <div key={pIdx} className="p-3 bg-slate-900/50 rounded-2xl border border-purple-500/10 flex justify-between items-center group">
-                          <div>
-                            <span className="text-[10px] font-bold text-white block group-hover:text-purple-400 transition-colors">{proc.name}</span>
-                            <span className="text-[8px] text-gray-500">{proc.desc}</span>
+              {/* MODULE 5: DIGITAL TWIN LAB */}
+              {(viewMode === "unified" || activeHUDSection === "TWIN") && (
+                <section id="TWIN" className="scroll-mt-28">
+                  <div className="rounded-3xl border border-white/10 bg-slate-950/50 backdrop-blur-xl p-6 shadow-2xl h-full flex flex-col justify-between">
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                            <UserCheck className="w-5 h-5" />
                           </div>
-                          <button
-                            onClick={() => handleAddProcurement(proc)}
-                            className="bg-purple-500/10 border border-purple-500/30 text-purple-400 hover:bg-purple-500 hover:text-black p-2 rounded-xl text-[10px] font-black transition-all cursor-pointer flex items-center justify-center gap-1 font-mono"
-                          >
-                            {proc.price} <ShoppingBag className="w-3 h-3" />
-                          </button>
+                          <div className="text-left">
+                            <h2 className="text-sm font-black uppercase tracking-wider text-white">Personal Digital Twin Lab</h2>
+                            <p className="text-[10px] text-gray-400">Monitor and fine-tune your autonomous procurement agent</p>
+                          </div>
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="pt-4 border-t border-white/5 text-[9px] font-mono text-gray-500 text-left mt-4">
-                  Adjust slider to dynamically vector life projections.
-                </div>
-              </div>
-            </section>
-
-            {/* MODULE 5: DIGITAL TWIN LAB */}
-            <section id="TWIN" className="scroll-mt-28">
-              <div className="rounded-3xl border border-white/10 bg-slate-950/50 backdrop-blur-xl p-6 shadow-2xl h-full flex flex-col justify-between">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                        <UserCheck className="w-5 h-5" />
                       </div>
-                      <div className="text-left">
-                        <h2 className="text-sm font-black uppercase tracking-wider text-white">Personal Digital Twin Lab</h2>
-                        <p className="text-[10px] text-gray-400">Monitor and fine-tune your autonomous procurement agent</p>
-                      </div>
-                    </div>
-                  </div>
 
-                  {/* Twin Settings Configuration sliders */}
-                  <div className="bg-black/30 p-4 rounded-2xl border border-white/5 space-y-3 font-mono text-left">
-                    <h3 className="text-[9px] font-black uppercase tracking-widest text-emerald-400 mb-2 border-b border-white/5 pb-1">Cognitive Bias Parameters</h3>
-                    
-                    {[
-                      { key: "riskAppetite", label: "Speculative Risk appetite", labelVal: `${twinConfig.riskAppetite}%` },
-                      { key: "ethicalBias", label: "Ethical / carbon audit bias", labelVal: `${twinConfig.ethicalBias}%` },
-                      { key: "budgetBuffer", label: "Autonomous Liquidity buffer", labelVal: `${twinConfig.budgetBuffer}%` }
-                    ].map(slider => (
-                      <div key={slider.key} className="space-y-1">
-                        <div className="flex justify-between text-[9px] text-gray-400">
-                          <span>{slider.label}</span>
-                          <span className="text-emerald-400 font-bold">{slider.labelVal}</span>
+                      {/* Twin Settings Configuration sliders */}
+                      <div className="bg-black/30 p-4 rounded-2xl border border-white/5 space-y-3 font-mono text-left">
+                        <h3 className="text-[9px] font-black uppercase tracking-widest text-emerald-400 mb-2 border-b border-white/5 pb-1">Cognitive Bias Parameters</h3>
+                        
+                        {[
+                          { key: "riskAppetite", label: "Speculative Risk appetite", labelVal: `${twinConfig.riskAppetite}%` },
+                          { key: "ethicalBias", label: "Ethical / carbon audit bias", labelVal: `${twinConfig.ethicalBias}%` },
+                          { key: "budgetBuffer", label: "Autonomous Liquidity buffer", labelVal: `${twinConfig.budgetBuffer}%` }
+                        ].map(slider => (
+                          <div key={slider.key} className="space-y-1">
+                            <div className="flex justify-between text-[9px] text-gray-400">
+                              <span>{slider.label}</span>
+                              <span className="text-emerald-400 font-bold">{slider.labelVal}</span>
+                            </div>
+                            <input
+                              type="range"
+                              min="0"
+                              max="100"
+                              value={(twinConfig as any)[slider.key]}
+                              onChange={(e) => setTwinConfig(prev => ({ ...prev, [slider.key]: parseInt(e.target.value) }))}
+                              className="w-full h-1 bg-white/5 rounded-lg appearance-none cursor-pointer accent-emerald-500"
+                            />
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Twin Activity list */}
+                      <div className="text-left font-mono">
+                        <div className="flex items-center gap-1.5 mb-2">
+                          <Activity className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
+                          <span className="text-[8px] text-gray-500 uppercase tracking-widest">Twin background action telemetry:</span>
                         </div>
-                        <input
-                          type="range"
-                          min="0"
-                          max="100"
-                          value={(twinConfig as any)[slider.key]}
-                          onChange={(e) => setTwinConfig(prev => ({ ...prev, [slider.key]: parseInt(e.target.value) }))}
-                          className="w-full h-1 bg-white/5 rounded-lg appearance-none cursor-pointer accent-emerald-500"
-                        />
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Twin Activity list */}
-                  <div className="text-left font-mono">
-                    <div className="flex items-center gap-1.5 mb-2">
-                      <Activity className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
-                      <span className="text-[8px] text-gray-500 uppercase tracking-widest">Twin background action telemetry:</span>
-                    </div>
-                    <div className="space-y-1.5 h-[120px] overflow-y-auto custom-scrollbar bg-slate-900/40 p-3 rounded-2xl border border-white/5">
-                      {twinLogs.map((log, lIdx) => (
-                        <div key={lIdx} className="text-[9px] flex items-center gap-2 text-gray-300">
-                          <span className="w-1 h-1 rounded-full bg-emerald-400 shrink-0" />
-                          <span className="break-all">{log}</span>
+                        <div className="space-y-1.5 h-[120px] overflow-y-auto custom-scrollbar bg-slate-900/40 p-3 rounded-2xl border border-white/5">
+                          {twinLogs.map((log, lIdx) => (
+                            <div key={lIdx} className="text-[9px] flex items-center gap-2 text-gray-300">
+                              <span className="w-1 h-1 rounded-full bg-emerald-400 shrink-0" />
+                              <span className="break-all">{log}</span>
+                            </div>
+                          ))}
                         </div>
-                      ))}
+                      </div>
+                    </div>
+
+                    <div className="pt-4 border-t border-white/5 flex items-center justify-between text-[9px] font-mono text-gray-500 mt-4">
+                      <span>Twin Synchronized. Biometric synced.</span>
+                      <button
+                        onClick={() => {
+                          setTwinLogs(prev => ["Dispatched neural search optimizer.", ...prev]);
+                          alert("Twin recalibrated.");
+                        }}
+                        className="text-emerald-400 hover:underline cursor-pointer"
+                      >
+                        Force Recalibration
+                      </button>
                     </div>
                   </div>
-                </div>
+                </section>
+              )}
 
-                <div className="pt-4 border-t border-white/5 flex items-center justify-between text-[9px] font-mono text-gray-500 mt-4">
-                  <span>Twin Synchronized. Biometric synced.</span>
-                  <button
-                    onClick={() => {
-                      setTwinLogs(prev => ["Dispatched neural search optimizer.", ...prev]);
-                      alert("Twin recalibrated.");
-                    }}
-                    className="text-emerald-400 hover:underline cursor-pointer"
-                  >
-                    Force Recalibration
-                  </button>
-                </div>
-              </div>
-            </section>
-
-          </div>
+            </div>
+          )}
 
           {/* SONAR RADAR & SIMULATOR GRID */}
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-            
-            {/* MODULE 6: OPPORTUNITY RADAR */}
-            <section id="RADAR" className="scroll-mt-28">
-              <div className="rounded-3xl border border-white/10 bg-slate-950/50 backdrop-blur-xl p-6 shadow-2xl h-full flex flex-col justify-between">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="p-2.5 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
-                        <Compass className="w-5 h-5 animate-pulse" />
-                      </div>
-                      <div className="text-left">
-                        <h2 className="text-sm font-black uppercase tracking-wider text-white">Live Opportunity Radar</h2>
-                        <p className="text-[10px] text-gray-400">Click sonar ping locations to inspect market arbitrage anomalies</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-                    {/* SVG Sonar Canvas */}
-                    <div className="relative aspect-square max-w-[200px] mx-auto w-full bg-black/60 rounded-full border border-cyan-500/10 flex items-center justify-center overflow-hidden">
-                      {/* Grid concentric rings */}
-                      <div className="absolute w-[80%] h-[80%] rounded-full border border-cyan-500/5" />
-                      <div className="absolute w-[60%] h-[60%] rounded-full border border-cyan-500/5" />
-                      <div className="absolute w-[40%] h-[40%] rounded-full border border-cyan-500/5" />
-                      <div className="absolute w-[20%] h-[20%] rounded-full border border-cyan-500/5" />
-                      {/* X/Y Crosshairs */}
-                      <div className="absolute w-full h-[1px] bg-cyan-500/5" />
-                      <div className="absolute h-full w-[1px] bg-cyan-500/5" />
-
-                      {/* Rotating sweeping line */}
-                      <div
-                        className="absolute top-1/2 left-1/2 w-[50%] h-[50%] origin-top-left bg-gradient-to-tr from-cyan-500/0 to-cyan-500/30"
-                        style={{ transform: `rotate(${radarSweepAngle}deg) translate(-100%, -100%)` }}
-                      />
-
-                      {/* Opportunity Radar Hotspots */}
-                      {[
-                        { name: "14% Discount on VR headset", type: "Product Arbitrage", desc: "Active arbitrage found. Buy via Nexus Store, resell on Myntra yields 18% margin.", action: "Deploy Twin", x: 40, y: 35, color: "bg-cyan-400" },
-                        { name: "Quantum Arch course", type: "Career Opportunity", desc: "Synaptic Developer demand up 30%. Acquiring this unlocks timeline path 8 months early.", action: "Pre-Register", x: 120, y: 60, color: "bg-purple-500" },
-                        { name: "Amazon liquid memory sale", type: "Arbitrage Discount", desc: "Wholesale seller selling computing blocks at $85. standard value is $120.", action: "Acquire block", x: 75, y: 140, color: "bg-amber-400" }
-                      ].map((dot, dIdx) => (
-                        <button
-                          key={dIdx}
-                          onClick={() => handleRadarClick(dot.x, dot.y, dot.name, dot.type, dot.desc, dot.action)}
-                          className={`absolute w-3 h-3 rounded-full ${dot.color} cursor-pointer border border-white hover:scale-150 transition-transform shadow-[0_0_10px_rgba(255,255,255,0.8)]`}
-                          style={{ left: `${dot.x}px`, top: `${dot.y}px` }}
-                        />
-                      ))}
-                    </div>
-
-                    {/* Opportunity description box */}
-                    {selectedOpportunity && (
-                      <div className="bg-slate-900/60 p-4 rounded-2xl border border-white/5 text-left font-mono space-y-3">
-                        <div className="border-b border-white/5 pb-2">
-                          <span className="text-[8px] bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 px-2 py-0.5 rounded-full font-bold uppercase block w-max mb-1">
-                            {selectedOpportunity.type}
-                          </span>
-                          <h3 className="text-[11px] font-bold text-white">{selectedOpportunity.title}</h3>
+          {(viewMode === "unified" || activeHUDSection === "RADAR" || activeHUDSection === "SANDBOX") && (
+            <div className={viewMode === "focus" ? "w-full max-w-4xl mx-auto" : "grid grid-cols-1 xl:grid-cols-2 gap-8"}>
+              
+              {/* MODULE 6: OPPORTUNITY RADAR */}
+              {(viewMode === "unified" || activeHUDSection === "RADAR") && (
+                <section id="RADAR" className="scroll-mt-28">
+                  <div className="rounded-3xl border border-white/10 bg-slate-950/50 backdrop-blur-xl p-6 shadow-2xl h-full flex flex-col justify-between">
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="p-2.5 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                            <Compass className="w-5 h-5 animate-pulse" />
+                          </div>
+                          <div className="text-left">
+                            <h2 className="text-sm font-black uppercase tracking-wider text-white">Live Opportunity Radar</h2>
+                            <p className="text-[10px] text-gray-400">Click sonar ping locations to inspect market arbitrage anomalies</p>
+                          </div>
                         </div>
-                        <p className="text-[9px] text-gray-400 leading-relaxed">{selectedOpportunity.desc}</p>
-                        <button
-                          onClick={() => alert(`Initiating workflow: ${selectedOpportunity.action}`)}
-                          className="w-full bg-cyan-500 hover:bg-cyan-600 text-black font-black uppercase text-[10px] py-1.5 rounded-lg transition-all font-mono tracking-widest cursor-pointer"
-                        >
-                          {selectedOpportunity.action}
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="pt-4 border-t border-white/5 text-[9px] font-mono text-gray-500 text-left mt-4 flex items-center justify-between">
-                  <span>Concentric Sweep Radius: 200 light sec</span>
-                  <span>3 Active anomalies detected</span>
-                </div>
-              </div>
-            </section>
-
-            {/* MODULE 7: REALITY SANDBOX */}
-            <section id="SANDBOX" className="scroll-mt-28">
-              <div className="rounded-3xl border border-white/10 bg-slate-950/50 backdrop-blur-xl p-6 shadow-2xl h-full flex flex-col justify-between">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-                        <Layers className="w-5 h-5" />
-                      </div>
-                      <div className="text-left">
-                        <h2 className="text-sm font-black uppercase tracking-wider text-white">Temporal Reality Sandbox</h2>
-                        <p className="text-[10px] text-gray-400">Simulate structural impacts of purchase decisions on your profile</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left font-mono">
-                    <div className="space-y-3">
-                      <div>
-                        <span className="text-[8px] text-gray-500 uppercase tracking-widest block mb-1">Select simulated target</span>
-                        <select
-                          value={sandboxProduct}
-                          onChange={(e) => setSandboxProduct(e.target.value)}
-                          className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500 font-mono"
-                        >
-                          <option value="Nexus AeroBook Pro">Nexus AeroBook Pro ($2,499)</option>
-                          <option value="Quest VR Node">Nexus Quest VR Node ($1,199)</option>
-                          <option value="Nexus Companion Hub">Nexus Companion Hub ($699)</option>
-                        </select>
                       </div>
 
-                      <div>
-                        <span className="text-[8px] text-gray-500 uppercase tracking-widest block mb-1">Amortized life impact period</span>
-                        <div className="flex justify-between text-[9px] text-gray-400 mb-1">
-                          <span>Timeline window:</span>
-                          <span className="text-indigo-400 font-bold">{sandboxInvestment} months</span>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+                        {/* SVG Sonar Canvas */}
+                        <div className="relative aspect-square max-w-[200px] mx-auto w-full bg-black/60 rounded-full border border-cyan-500/10 flex items-center justify-center overflow-hidden">
+                          {/* Grid concentric rings */}
+                          <div className="absolute w-[80%] h-[80%] rounded-full border border-cyan-500/5" />
+                          <div className="absolute w-[60%] h-[60%] rounded-full border border-cyan-500/5" />
+                          <div className="absolute w-[40%] h-[40%] rounded-full border border-cyan-500/5" />
+                          <div className="absolute w-[20%] h-[20%] rounded-full border border-cyan-500/5" />
+                          {/* X/Y Crosshairs */}
+                          <div className="absolute w-full h-[1px] bg-cyan-500/5" />
+                          <div className="absolute h-full w-[1px] bg-cyan-500/5" />
+
+                          {/* Rotating sweeping line */}
+                          <div
+                            className="absolute top-1/2 left-1/2 w-[50%] h-[50%] origin-top-left bg-gradient-to-tr from-cyan-500/0 to-cyan-500/30"
+                            style={{ transform: `rotate(${radarSweepAngle}deg) translate(-100%, -100%)` }}
+                          />
+
+                          {/* Opportunity Radar Hotspots */}
+                          {[
+                            { name: "14% Discount on VR headset", type: "Product Arbitrage", desc: "Active arbitrage found. Buy via Nexus Store, resell on Myntra yields 18% margin.", action: "Deploy Twin", x: 40, y: 35, color: "bg-cyan-400" },
+                            { name: "Quantum Arch course", type: "Career Opportunity", desc: "Synaptic Developer demand up 30%. Acquiring this unlocks timeline path 8 months early.", action: "Pre-Register", x: 120, y: 60, color: "bg-purple-500" },
+                            { name: "Amazon liquid memory sale", type: "Arbitrage Discount", desc: "Wholesale seller selling computing blocks at $85. standard value is $120.", action: "Acquire block", x: 75, y: 140, color: "bg-amber-400" }
+                          ].map((dot, dIdx) => (
+                            <button
+                              key={dIdx}
+                              onClick={() => handleRadarClick(dot.x, dot.y, dot.name, dot.type, dot.desc, dot.action)}
+                              className={`absolute w-3 h-3 rounded-full ${dot.color} cursor-pointer border border-white hover:scale-150 transition-transform shadow-[0_0_10px_rgba(255,255,255,0.8)]`}
+                              style={{ left: `${dot.x}px`, top: `${dot.y}px` }}
+                            />
+                          ))}
                         </div>
-                        <input
-                          type="range"
-                          min="1"
-                          max="24"
-                          value={sandboxInvestment}
-                          onChange={(e) => setSandboxInvestment(parseInt(e.target.value))}
-                          className="w-full h-1 bg-white/5 rounded-lg appearance-none cursor-pointer accent-indigo-500"
-                        />
-                      </div>
 
-                      <button
-                        onClick={runSandboxSimulation}
-                        className="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-black py-2 rounded-xl text-xs uppercase tracking-widest transition-all cursor-pointer font-mono"
-                      >
-                        Run Sandbox Impact
-                      </button>
+                        {/* Opportunity description box */}
+                        {selectedOpportunity && (
+                          <div className="bg-slate-900/60 p-4 rounded-2xl border border-white/5 text-left font-mono space-y-3">
+                            <div className="border-b border-white/5 pb-2">
+                              <span className="text-[8px] bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 px-2 py-0.5 rounded-full font-bold uppercase block w-max mb-1">
+                                {selectedOpportunity.type}
+                              </span>
+                              <h3 className="text-[11px] font-bold text-white">{selectedOpportunity.title}</h3>
+                            </div>
+                            <p className="text-[9px] text-gray-400 leading-relaxed">{selectedOpportunity.desc}</p>
+                            <button
+                              onClick={() => alert(`Initiating workflow: ${selectedOpportunity.action}`)}
+                              className="w-full bg-cyan-500 hover:bg-cyan-600 text-black font-black uppercase text-[10px] py-1.5 rounded-lg transition-all font-mono tracking-widest cursor-pointer"
+                            >
+                              {selectedOpportunity.action}
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
 
-                    {/* Recharts chart mapping sandbox impact */}
-                    <div className="h-[150px] bg-black/40 p-2 rounded-2xl border border-white/5">
-                      <span className="text-[8px] text-gray-500 uppercase tracking-widest block mb-1">Simulated profile metrics impact</span>
-                      {mounted && (
-                        <ResponsiveContainer width="100%" height="90%">
-                          <BarChart data={sandboxMetrics} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
-                            <XAxis dataKey="name" tick={{ fill: "#6b7280", fontSize: 8 }} />
-                            <Tooltip contentStyle={{ background: "#0f172a", border: "1px solid rgba(255,255,255,0.1)", fontSize: 9 }} />
-                            <Bar dataKey="before" fill="#475569" radius={[4, 4, 0, 0]} />
-                            <Bar dataKey="after" fill="#6366f1" radius={[4, 4, 0, 0]} />
-                          </BarChart>
-                        </ResponsiveContainer>
-                      )}
+                    <div className="pt-4 border-t border-white/5 text-[9px] font-mono text-gray-500 text-left mt-4 flex items-center justify-between">
+                      <span>Concentric Sweep Radius: 200 light sec</span>
+                      <span>3 Active anomalies detected</span>
                     </div>
                   </div>
-                </div>
+                </section>
+              )}
 
-                <div className="pt-4 border-t border-white/5 flex justify-between text-[9px] font-mono text-gray-500 text-left mt-4">
-                  <span>Gray: Pre-purchase metric | Indigo: Post-purchase projection</span>
-                </div>
-              </div>
-            </section>
+              {/* MODULE 7: REALITY SANDBOX */}
+              {(viewMode === "unified" || activeHUDSection === "SANDBOX") && (
+                <section id="SANDBOX" className="scroll-mt-28">
+                  <div className="rounded-3xl border border-white/10 bg-slate-950/50 backdrop-blur-xl p-6 shadow-2xl h-full flex flex-col justify-between">
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                            <Layers className="w-5 h-5" />
+                          </div>
+                          <div className="text-left">
+                            <h2 className="text-sm font-black uppercase tracking-wider text-white">Temporal Reality Sandbox</h2>
+                            <p className="text-[10px] text-gray-400">Simulate structural impacts of purchase decisions on your profile</p>
+                          </div>
+                        </div>
+                      </div>
 
-          </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left font-mono">
+                        <div className="space-y-3">
+                          <div>
+                            <span className="text-[8px] text-gray-500 uppercase tracking-widest block mb-1">Select simulated target</span>
+                            <select
+                              value={sandboxProduct}
+                              onChange={(e) => setSandboxProduct(e.target.value)}
+                              className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500 font-mono"
+                            >
+                              <option value="Nexus AeroBook Pro">Nexus AeroBook Pro ($2,499)</option>
+                              <option value="Quest VR Node">Nexus Quest VR Node ($1,199)</option>
+                              <option value="Nexus Companion Hub">Nexus Companion Hub ($699)</option>
+                            </select>
+                          </div>
+
+                          <div>
+                            <span className="text-[8px] text-gray-500 uppercase tracking-widest block mb-1">Amortized life impact period</span>
+                            <div className="flex justify-between text-[9px] text-gray-400 mb-1">
+                              <span>Timeline window:</span>
+                              <span className="text-indigo-400 font-bold">{sandboxInvestment} months</span>
+                            </div>
+                            <input
+                              type="range"
+                              min="1"
+                              max="24"
+                              value={sandboxInvestment}
+                              onChange={(e) => setSandboxInvestment(parseInt(e.target.value))}
+                              className="w-full h-1 bg-white/5 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                            />
+                          </div>
+
+                          <button
+                            onClick={runSandboxSimulation}
+                            className="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-black py-2 rounded-xl text-xs uppercase tracking-widest transition-all cursor-pointer font-mono"
+                          >
+                            Run Sandbox Impact
+                          </button>
+                        </div>
+
+                        {/* Recharts chart mapping sandbox impact */}
+                        <div className="h-[150px] bg-black/40 p-2 rounded-2xl border border-white/5">
+                          <span className="text-[8px] text-gray-500 uppercase tracking-widest block mb-1">Simulated profile metrics impact</span>
+                          {mounted && (
+                            <ResponsiveContainer width="100%" height="90%">
+                              <BarChart data={sandboxMetrics} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
+                                <XAxis dataKey="name" tick={{ fill: "#6b7280", fontSize: 8 }} />
+                                <Tooltip contentStyle={{ background: "#0f172a", border: "1px solid rgba(255,255,255,0.1)", fontSize: 9 }} />
+                                <Bar dataKey="before" fill="#475569" radius={[4, 4, 0, 0]} />
+                                <Bar dataKey="after" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                              </BarChart>
+                            </ResponsiveContainer>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="pt-4 border-t border-white/5 flex justify-between text-[9px] font-mono text-gray-500 text-left mt-4">
+                      <span>Gray: Pre-purchase metric | Indigo: Post-purchase projection</span>
+                    </div>
+                  </div>
+                </section>
+              )}
+
+            </div>
+          )}
 
           {/* TICKERS & AUTONOMOUS ENGINE */}
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-            
-            {/* MODULE 8: GLOBAL MARKET RADAR */}
-            <section id="GLOBAL" className="scroll-mt-28">
-              <div className="rounded-3xl border border-white/10 bg-slate-950/50 backdrop-blur-xl p-6 shadow-2xl h-full flex flex-col justify-between">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="p-2.5 rounded-xl bg-sky-500/10 text-sky-400 border border-sky-500/20">
-                        <Globe2 className="w-5 h-5 animate-spin" style={{ animationDuration: "12s" }} />
+          {(viewMode === "unified" || activeHUDSection === "GLOBAL" || activeHUDSection === "AUTONOMOUS") && (
+            <div className={viewMode === "focus" ? "w-full max-w-4xl mx-auto" : "grid grid-cols-1 xl:grid-cols-2 gap-8"}>
+              
+              {/* MODULE 8: GLOBAL MARKET RADAR */}
+              {(viewMode === "unified" || activeHUDSection === "GLOBAL") && (
+                <section id="GLOBAL" className="scroll-mt-28">
+                  <div className="rounded-3xl border border-white/10 bg-slate-950/50 backdrop-blur-xl p-6 shadow-2xl h-full flex flex-col justify-between">
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="p-2.5 rounded-xl bg-sky-500/10 text-sky-400 border border-sky-500/20">
+                            <Globe2 className="w-5 h-5 animate-spin" style={{ animationDuration: "12s" }} />
+                          </div>
+                          <div className="text-left">
+                            <h2 className="text-sm font-black uppercase tracking-wider text-white">Global Market Volatility Radar</h2>
+                            <p className="text-[10px] text-gray-400">Real-time trade flow indexes and market ticker telemetry</p>
+                          </div>
+                        </div>
                       </div>
-                      <div className="text-left">
-                        <h2 className="text-sm font-black uppercase tracking-wider text-white">Global Market Volatility Radar</h2>
-                        <p className="text-[10px] text-gray-400">Real-time trade flow indexes and market ticker telemetry</p>
+
+                      {/* Market Heatmap grid simulator */}
+                      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 font-mono">
+                        {marketTrends.map((trend, tIdx) => (
+                          <div key={tIdx} className="p-3 bg-black/40 rounded-2xl border border-white/5 flex flex-col items-center justify-center">
+                            <span className="text-[10px] text-white font-bold">{trend.code}</span>
+                            <span className={`text-[9px] mt-1 font-bold ${trend.status === "up" ? "text-emerald-400" : "text-red-400"}`}>
+                              {trend.val}
+                            </span>
+                          </div>
+                        ))}
                       </div>
+
+                      {/* Volatility Trend chart */}
+                      <div className="h-[120px] bg-black/30 p-3.5 rounded-2xl border border-white/5 text-left font-mono">
+                        <span className="text-[8px] text-gray-500 uppercase tracking-widest block mb-1">Global Logistics Congestion Index (Vol)</span>
+                        {mounted && (
+                          <ResponsiveContainer width="100%" height="90%">
+                            <LineChart data={[
+                              { name: "09:00", index: 12 },
+                              { name: "10:00", index: 15 },
+                              { name: "11:00", index: 14 },
+                              { name: "12:00", index: 21 },
+                              { name: "13:00", index: 18 },
+                              { name: "14:00", index: 28 },
+                              { name: "15:00", index: 24 }
+                            ]}>
+                              <XAxis dataKey="name" stroke="#6b7280" fontSize={8} />
+                              <Tooltip contentStyle={{ background: "#0f172a", border: "1px solid rgba(255,255,255,0.1)", fontSize: 9 }} />
+                              <Line type="monotone" dataKey="index" stroke="#0ea5e9" strokeWidth={2} dot={false} />
+                            </LineChart>
+                          </ResponsiveContainer>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="pt-4 border-t border-white/5 text-[9px] font-mono text-gray-500 text-left mt-4">
+                      Aggregating logistics metrics across Chennai, Rotterdam, Shenzhen ports.
+                    </div>
+                  </div>
+                </section>
+              )}
+
+              {/* MODULE 9: AUTONOMOUS SHOPPING ENGINE */}
+              {(viewMode === "unified" || activeHUDSection === "AUTONOMOUS") && (
+                <section id="AUTONOMOUS" className="scroll-mt-28">
+                  <div className="rounded-3xl border border-white/10 bg-slate-950/50 backdrop-blur-xl p-6 shadow-2xl h-full flex flex-col justify-between">
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="p-2.5 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                            <Cpu className="w-5 h-5 animate-pulse" />
+                          </div>
+                          <div className="text-left">
+                            <h2 className="text-sm font-black uppercase tracking-wider text-white">Autonomous Shopping Engine</h2>
+                            <p className="text-[10px] text-gray-400">Configure twin buying limits for automatic deal locking</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-3 text-left font-mono">
+                        <div>
+                          <span className="text-[8px] text-gray-500 uppercase tracking-widest block mb-1">Target product SKU</span>
+                          <input
+                            type="text"
+                            value={autoBuyProduct}
+                            onChange={(e) => setAutoBuyProduct(e.target.value)}
+                            placeholder="e.g. Nexus Companion Hub"
+                            className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-rose-500 font-mono"
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <span className="text-[8px] text-gray-500 uppercase tracking-widest block mb-1">Price limit limit ($)</span>
+                            <input
+                              type="number"
+                              value={autoBuyTarget}
+                              onChange={(e) => setAutoBuyTarget(parseInt(e.target.value) || 0)}
+                              className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-rose-500 font-mono"
+                            />
+                          </div>
+                          <div>
+                            <span className="text-[8px] text-gray-500 uppercase tracking-widest block mb-1">Autonomous Status</span>
+                            <span className="w-full bg-slate-900 border border-white/5 rounded-xl px-3 py-2 text-xs block font-bold text-rose-400 text-center animate-pulse">
+                              {autoBuyStatus}
+                            </span>
+                          </div>
+                        </div>
+
+                        <button
+                          onClick={dispatchAutoBuy}
+                          className="w-full bg-rose-500 hover:bg-rose-600 text-white font-black py-2 rounded-xl text-xs uppercase tracking-widest transition-all cursor-pointer font-mono"
+                        >
+                          Authorize Auto-Procurement limit
+                        </button>
+                      </div>
+
+                      <div className="bg-slate-900/60 p-3 rounded-2xl border border-white/5 text-[9px] text-gray-400 leading-relaxed font-mono text-left">
+                        <span className="text-[8px] text-rose-400 uppercase font-black tracking-wider block mb-1">DECISION LOGIC MATRIX:</span>
+                        If price drops below target limit, matching twin triggers escrow payment. Else, maintains monitor sweeps. Alternate target recommendation: <span className="text-rose-400 underline cursor-pointer">Nexus Phone X mini</span> ($499).
+                      </div>
+                    </div>
+
+                    <div className="pt-4 border-t border-white/5 text-[9px] font-mono text-gray-500 text-left mt-4 flex items-center justify-between">
+                      <span>Direct API Escrow status: INACTIVE</span>
+                    </div>
+                  </div>
+                </section>
+              )}
+
+            </div>
+          )}
+
+          {/* MODULE 10: NEXUS INTELLIGENCE ALERTS FEED */}
+          {(viewMode === "unified" || activeHUDSection === "FEED") && (
+            <div className="w-full max-w-4xl mx-auto">
+              <section id="FEED" className="scroll-mt-28">
+                <div className="rounded-3xl border border-white/10 bg-slate-950/50 backdrop-blur-xl p-6 shadow-2xl">
+                  <div className="flex items-center gap-2 mb-6">
+                    <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                      <AlertCircle className="w-5 h-5 animate-bounce" />
+                    </div>
+                    <div className="text-left">
+                      <h2 className="text-sm font-black uppercase tracking-wider text-white">Nexus Intelligence alerts feed</h2>
+                      <p className="text-[10px] text-gray-400">Continuous AI-generated market opportunities and alerts</p>
                     </div>
                   </div>
 
-                  {/* Market Heatmap grid simulator */}
-                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 font-mono">
-                    {marketTrends.map((trend, tIdx) => (
-                      <div key={tIdx} className="p-3 bg-black/40 rounded-2xl border border-white/5 flex flex-col items-center justify-center">
-                        <span className="text-[10px] text-white font-bold">{trend.code}</span>
-                        <span className={`text-[9px] mt-1 font-bold ${trend.status === "up" ? "text-emerald-400" : "text-red-400"}`}>
-                          {trend.val}
-                        </span>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 font-mono text-left">
+                    {alertsFeed.map((alertItem) => (
+                      <div key={alertItem.id} className="p-4 rounded-2xl bg-slate-900/50 border border-white/5 space-y-2 flex flex-col justify-between hover:border-cyan-500/20 transition-colors">
+                        <div>
+                          <div className="flex items-center gap-1.5 text-[8px] font-black uppercase tracking-wider text-cyan-400 mb-1">
+                            <Sparkles className="w-3.5 h-3.5" />
+                            AI Market Signal
+                          </div>
+                          <h4 className="text-[11px] font-bold text-white mb-1.5 leading-tight">{alertItem.title}</h4>
+                          <p className="text-[9px] text-gray-400 leading-relaxed">{alertItem.msg}</p>
+                        </div>
+                        <div className="pt-3 border-t border-white/5 mt-3 flex justify-end">
+                          <button
+                            onClick={() => alert(`Optimizing: ${alertItem.title}`)}
+                            className="text-[9px] font-bold uppercase tracking-wider text-cyan-400 hover:text-cyan-300 transition-colors cursor-pointer"
+                          >
+                            Authorize Optimization &rarr;
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
-
-                  {/* Volatility Trend chart */}
-                  <div className="h-[120px] bg-black/30 p-3.5 rounded-2xl border border-white/5 text-left font-mono">
-                    <span className="text-[8px] text-gray-500 uppercase tracking-widest block mb-1">Global Logistics Congestion Index (Vol)</span>
-                    {mounted && (
-                      <ResponsiveContainer width="100%" height="90%">
-                        <LineChart data={[
-                          { name: "09:00", index: 12 },
-                          { name: "10:00", index: 15 },
-                          { name: "11:00", index: 14 },
-                          { name: "12:00", index: 21 },
-                          { name: "13:00", index: 18 },
-                          { name: "14:00", index: 28 },
-                          { name: "15:00", index: 24 }
-                        ]}>
-                          <XAxis dataKey="name" stroke="#6b7280" fontSize={8} />
-                          <Tooltip contentStyle={{ background: "#0f172a", border: "1px solid rgba(255,255,255,0.1)", fontSize: 9 }} />
-                          <Line type="monotone" dataKey="index" stroke="#0ea5e9" strokeWidth={2} dot={false} />
-                        </LineChart>
-                      </ResponsiveContainer>
-                    )}
-                  </div>
                 </div>
-
-                <div className="pt-4 border-t border-white/5 text-[9px] font-mono text-gray-500 text-left mt-4">
-                  Aggregating logistics metrics across Chennai, Rotterdam, Shenzhen ports.
-                </div>
-              </div>
-            </section>
-
-            {/* MODULE 9: AUTONOMOUS SHOPPING ENGINE */}
-            <section id="AUTONOMOUS" className="scroll-mt-28">
-              <div className="rounded-3xl border border-white/10 bg-slate-950/50 backdrop-blur-xl p-6 shadow-2xl h-full flex flex-col justify-between">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="p-2.5 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20">
-                        <Cpu className="w-5 h-5 animate-pulse" />
-                      </div>
-                      <div className="text-left">
-                        <h2 className="text-sm font-black uppercase tracking-wider text-white">Autonomous Shopping Engine</h2>
-                        <p className="text-[10px] text-gray-400">Configure twin buying limits for automatic deal locking</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-3 text-left font-mono">
-                    <div>
-                      <span className="text-[8px] text-gray-500 uppercase tracking-widest block mb-1">Target product SKU</span>
-                      <input
-                        type="text"
-                        value={autoBuyProduct}
-                        onChange={(e) => setAutoBuyProduct(e.target.value)}
-                        placeholder="e.g. Nexus Companion Hub"
-                        className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-rose-500 font-mono"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <span className="text-[8px] text-gray-500 uppercase tracking-widest block mb-1">Price limit limit ($)</span>
-                        <input
-                          type="number"
-                          value={autoBuyTarget}
-                          onChange={(e) => setAutoBuyTarget(parseInt(e.target.value) || 0)}
-                          className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-rose-500 font-mono"
-                        />
-                      </div>
-                      <div>
-                        <span className="text-[8px] text-gray-500 uppercase tracking-widest block mb-1">Autonomous Status</span>
-                        <span className="w-full bg-slate-900 border border-white/5 rounded-xl px-3 py-2 text-xs block font-bold text-rose-400 text-center animate-pulse">
-                          {autoBuyStatus}
-                        </span>
-                      </div>
-                    </div>
-
-                    <button
-                      onClick={dispatchAutoBuy}
-                      className="w-full bg-rose-500 hover:bg-rose-600 text-white font-black py-2 rounded-xl text-xs uppercase tracking-widest transition-all cursor-pointer font-mono"
-                    >
-                      Authorize Auto-Procurement limit
-                    </button>
-                  </div>
-
-                  <div className="bg-slate-900/60 p-3 rounded-2xl border border-white/5 text-[9px] text-gray-400 leading-relaxed font-mono text-left">
-                    <span className="text-[8px] text-rose-400 uppercase font-black tracking-wider block mb-1">DECISION LOGIC MATRIX:</span>
-                    If price drops below target limit, matching twin triggers escrow payment. Else, maintains monitor sweeps. Alternate target recommendation: <span className="text-rose-400 underline cursor-pointer">Nexus Phone X mini</span> ($499).
-                  </div>
-                </div>
-
-                <div className="pt-4 border-t border-white/5 text-[9px] font-mono text-gray-500 text-left mt-4 flex items-center justify-between">
-                  <span>Direct API Escrow status: INACTIVE</span>
-                </div>
-              </div>
-            </section>
-
-          </div>
-
-          {/* MODULE 10: NEXUS INTELLIGENCE ALERTS FEED */}
-          <section id="FEED" className="scroll-mt-28">
-            <div className="rounded-3xl border border-white/10 bg-slate-950/50 backdrop-blur-xl p-6 shadow-2xl">
-              <div className="flex items-center gap-2 mb-6">
-                <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-                  <AlertCircle className="w-5 h-5 animate-bounce" />
-                </div>
-                <div className="text-left">
-                  <h2 className="text-sm font-black uppercase tracking-wider text-white">Nexus Intelligence alerts feed</h2>
-                  <p className="text-[10px] text-gray-400">Continuous AI-generated market opportunities and alerts</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 font-mono text-left">
-                {alertsFeed.map((alertItem) => (
-                  <div key={alertItem.id} className="p-4 rounded-2xl bg-slate-900/50 border border-white/5 space-y-2 flex flex-col justify-between hover:border-cyan-500/20 transition-colors">
-                    <div>
-                      <div className="flex items-center gap-1.5 text-[8px] font-black uppercase tracking-wider text-cyan-400 mb-1">
-                        <Sparkles className="w-3.5 h-3.5" />
-                        AI Market Signal
-                      </div>
-                      <h4 className="text-[11px] font-bold text-white mb-1.5 leading-tight">{alertItem.title}</h4>
-                      <p className="text-[9px] text-gray-400 leading-relaxed">{alertItem.msg}</p>
-                    </div>
-                    <div className="pt-3 border-t border-white/5 mt-3 flex justify-end">
-                      <button
-                        onClick={() => alert(`Optimizing: ${alertItem.title}`)}
-                        className="text-[9px] font-bold uppercase tracking-wider text-cyan-400 hover:text-cyan-300 transition-colors cursor-pointer"
-                      >
-                        Authorize Optimization &rarr;
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              </section>
             </div>
-          </section>
+          )}
 
         </div>
       </div>
