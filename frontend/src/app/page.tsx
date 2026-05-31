@@ -3,944 +3,1207 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useDispatch, useSelector } from "react-redux";
-import { RootState } from "@/store/store";
+import { useDispatch } from "react-redux";
 import { addToCart } from "@/store/slices/cartSlice";
 import { mockDb } from "@/utils/mockDb";
 import { NavBar } from "@/components/ui/NavBar";
-import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
-import { 
-  ShoppingBag, Star, Zap, Clock, ChevronLeft, ChevronRight, 
-  ArrowRight, ShieldCheck, Mail, Check, Heart,
-  Sparkles, Package, Truck, RotateCcw, Headphones, 
-  TrendingUp, Award, Users, Globe, ChevronDown, Play
+import Scene from "@/components/canvas/Scene";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Sparkles, Terminal, Activity, Zap, Shield, GitBranch, MessageSquare, Briefcase,
+  UserCheck, Search, ShoppingBag, TrendingUp, AlertCircle, Play, Sliders, ShieldAlert,
+  ArrowRight, Check, Heart, Cpu, Compass, HelpCircle, Layers, Globe2
 } from "lucide-react";
+import {
+  ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip,
+  LineChart, Line, BarChart, Bar, RadarChart, PolarGrid,
+  PolarAngleAxis, PolarRadiusAxis, Radar
+} from "recharts";
 
 export default function Home() {
   const router = useRouter();
   const dispatch = useDispatch();
-  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
-  const heroRef = useRef<HTMLDivElement>(null);
-
   const [mounted, setMounted] = useState(false);
-  const [products, setProducts] = useState<any[]>([]);
-  const [heroIndex, setHeroIndex] = useState(0);
-  const [countdown, setCountdown] = useState({ hours: 4, minutes: 34, seconds: 12 });
-  const [newsletterEmail, setNewsletterEmail] = useState("");
-  const [newsletterSubscribed, setNewsletterSubscribed] = useState(false);
-  const [wishlistedIds, setWishlistedIds] = useState<Set<string>>(new Set());
-  const [addedToCart, setAddedToCart] = useState<Set<string>>(new Set());
-  const [recentlyViewedProds, setRecentlyViewedProds] = useState<any[]>([]);
-  const [recommended, setRecommended] = useState<any[]>([]);
 
-  const heroBanners = [
+  // Active section for sidebar jumping
+  const [activeHUDSection, setActiveHUDSection] = useState("COMMAND");
+
+  // Telemetry Dashboard States
+  const [telemetry, setTelemetry] = useState({
+    neuralSync: 98.4,
+    activeAgents: 1420,
+    quantumLoad: 42,
+    simulatedTimelines: 120539
+  });
+
+  // 1. Universal Product Intelligence Engine States
+  const [searchQuery, setSearchQuery] = useState("Quantum Phone");
+  const [searchReport, setSearchReport] = useState<any>(null);
+  const [isSearching, setIsSearching] = useState(false);
+
+  // 2. AI Command Center Logging Feed State
+  const [systemLogs, setSystemLogs] = useState<string[]>([
+    "[09:12:04] [SYSTEM_BOOT] Nexus AI Commerce Operating System v4.12 initialized.",
+    "[09:12:05] [NEURAL_LINK] Brainwave telemetry calibrated. Sync established.",
+    "[09:12:06] [QUANTUM_GRID] Parallel futures projected; 1,294 scenarios resolved.",
+    "[09:12:08] [COGNITIVE_TWIN] Autonomous negotiator running concession loops on Amazon endpoints.",
+  ]);
+
+  // 3. Agent Battle Arena States
+  const [arenaQuery, setArenaQuery] = useState("Purchase Nexus AeroBook Pro");
+  const [arenaMessages, setArenaMessages] = useState<any[]>([]);
+  const [isDebating, setIsDebating] = useState(false);
+  const [consensusScore, setConsensusScore] = useState(50);
+  const [arenaStep, setArenaStep] = useState(0);
+
+  // 4. Future Self Simulator States
+  const [timelineValue, setTimelineValue] = useState(5);
+  const [simulatorData, setSimulatorData] = useState<any>({
+    year: 2031,
+    career: "Neuro-Cybernetics Architect",
+    skills: ["Synaptic Interface Mapping", "Biological Logic Grids", "Quantum Computing v2"],
+    procurements: [
+      { name: "AeroBook Pro", desc: "Core neural processing rig", price: "$2,499" },
+      { name: "Quest VR Node", desc: "Immersion development node", price: "$1,199" }
+    ],
+    graph: [
+      { name: "2026", worth: 85, aura: 60 },
+      { name: "2031", worth: 180, aura: 85 },
+      { name: "2036", worth: 320, aura: 110 },
+      { name: "2041", worth: 680, aura: 145 },
+      { name: "2046", worth: 1200, aura: 190 },
+      { name: "2051", worth: 2400, aura: 240 }
+    ]
+  });
+
+  // 5. Digital Twin Lab States
+  const [twinConfig, setTwinConfig] = useState({
+    riskAppetite: 70,
+    ethicalBias: 85,
+    budgetBuffer: 15,
+  });
+  const [twinLogs, setTwinLogs] = useState([
+    "Dispatched negotiating proxy for Memory module.",
+    "Refused Croma-Seller-A deal due to high carbon score.",
+    "Synchronized browsing history. Shifted interest weight to VR/AR.",
+    "Locked in 8% discount on secondary computing unit."
+  ]);
+
+  // 6. Opportunity Radar States
+  const [radarSweepAngle, setRadarSweepAngle] = useState(0);
+  const [selectedOpportunity, setSelectedOpportunity] = useState<any>({
+    title: "14% Discount on Nexus VR Headset",
+    type: "Product Arbitrage",
+    desc: "Active arbitrage found. Pre-negotiated discount on Nexus Store. Resell potential on Myntra yields 18% net margin.",
+    action: "Deploy Twin to Buy",
+    x: 40,
+    y: 35
+  });
+
+  // 7. Reality Sandbox States
+  const [sandboxProduct, setSandboxProduct] = useState("Nexus AeroBook Pro");
+  const [sandboxInvestment, setSandboxInvestment] = useState(12); // months amortization
+  const [sandboxMetrics, setSandboxMetrics] = useState<any[]>([
+    { name: "Capital Worth", before: 80, after: 68 },
+    { name: "Skill Acceleration", before: 40, after: 88 },
+    { name: "Cognitive Load", before: 30, after: 65 },
+    { name: "Aura / Peer Status", before: 50, after: 90 }
+  ]);
+
+  // 8. Global Market Radar Ticker Feed
+  const [marketTrends, setMarketTrends] = useState([
+    { code: "NEXUS", val: "+14.8%", status: "up" },
+    { code: "AMZN", val: "+2.4%", status: "up" },
+    { code: "FLIP", val: "-1.1%", status: "down" },
+    { code: "MYNT", val: "+4.2%", status: "up" },
+    { code: "RELIANCE", val: "-0.5%", status: "down" }
+  ]);
+
+  // 9. Autonomous Shopping Engine States
+  const [autoBuyProduct, setAutoBuyProduct] = useState("Nexus Companion Hub");
+  const [autoBuyTarget, setAutoBuyTarget] = useState(500);
+  const [autoBuyStatus, setAutoBuyStatus] = useState<string>("INACTIVE");
+
+  // 10. Nexus Intelligence Feed Alerts
+  const [alertsFeed, setAlertsFeed] = useState([
+    { id: 1, title: "Supply Chain Congestion Alert", msg: "AeroBook Pro processors experiencing logistics delays in Chennai node. Price volatility incoming." },
+    { id: 2, title: "Career Path Arbitrage Detected", msg: "Demand for Synaptic Interface developers increased by 42%. Aligning simulator purchase path." },
+    { id: 3, title: "Consolidated Discount Triggered", msg: "8 other user twins have combined bids for VR headset. Bulk discount rate of 18% available now." }
+  ]);
+
+  // Telemetry loop & log loop
+  useEffect(() => {
+    setMounted(true);
+    handleProductSearch("Quantum Phone");
+
+    const telemetryInterval = setInterval(() => {
+      setTelemetry(prev => ({
+        neuralSync: parseFloat((98.0 + Math.random() * 1.5).toFixed(2)),
+        activeAgents: prev.activeAgents + (Math.random() > 0.55 ? 1 : -1),
+        quantumLoad: Math.floor(35 + Math.random() * 18),
+        simulatedTimelines: prev.simulatedTimelines + Math.floor(Math.random() * 8)
+      }));
+    }, 2000);
+
+    const logs = [
+      "[NEURAL_LINK] Sync convergence stable at alpha waves.",
+      "[COGNITIVE_TWIN] Simulated buy of Laptops. Output ROI converged at +12%.",
+      "[GLOBAL_RADAR] Monitored Myntra prices. Trend margin converging.",
+      "[ARENA] Debating purchase node user-10294; waiting for Finance agent response.",
+      "[QUANTUM_GRID] Simulation matrix complete for career node: Quantum Engineer.",
+      "[AUTONOMOUS] Dispatched wait-bid for Companion Hub."
+    ];
+
+    const logInterval = setInterval(() => {
+      const time = new Date().toTimeString().split(' ')[0];
+      const randomLog = logs[Math.floor(Math.random() * logs.length)]!;
+      setSystemLogs(prev => [`[${time}] ${randomLog}`, ...prev.slice(0, 15)]);
+    }, 4500);
+
+    // Opportunity Radar rotation animation loop
+    const radarInterval = setInterval(() => {
+      setRadarSweepAngle(prev => (prev + 3) % 360);
+    }, 50);
+
+    return () => {
+      clearInterval(telemetryInterval);
+      clearInterval(logInterval);
+      clearInterval(radarInterval);
+    };
+  }, []);
+
+  // 1. Search Logic
+  const handleProductSearch = (query: string) => {
+    setIsSearching(true);
+    setTimeout(() => {
+      const results = mockDb.getProducts({ search: query });
+      let matchedProd = results[0];
+
+      if (!matchedProd) {
+        matchedProd = mockDb.getProducts({})[0];
+      }
+
+      if (matchedProd) {
+        const basePrice = matchedProd.price;
+        const discountPercentage = matchedProd.discount || 10;
+        const orgPrice = Math.round(basePrice / (1 - discountPercentage / 100));
+
+        setSearchReport({
+          product: matchedProd,
+          nexusPrice: basePrice,
+          amazonPrice: Math.round(basePrice * 1.18),
+          flipkartPrice: Math.round(basePrice * 1.15),
+          reliancePrice: Math.round(basePrice * 1.20),
+          dropChance: 75 + Math.floor(Math.random() * 20),
+          dropTime: "3-5 days",
+          aiScore: 92,
+          priceHistory: [
+            { month: "Mar", price: orgPrice * 1.05 },
+            { month: "Apr", price: orgPrice },
+            { month: "May (Current)", price: basePrice },
+            { month: "Jun (Predict)", price: basePrice * 0.9 }
+          ],
+          aiVerdict: `Highly Recommended. Buying this item directly via Nexus saves up to 18% compared to standard Amazon listings. The built-in AI Copilot has pre-negotiated priority delivery.`
+        });
+      }
+      setIsSearching(false);
+    }, 800);
+  };
+
+  // 3. Agent Battle Debate Sequence
+  const debateSteps = [
     {
-      title: "Nexus Quantum Phone X",
-      subtitle: "True quantum entanglement communication. Holographic projection. Zero latency.",
-      bg: "from-[#0a0015] via-[#1a0035] to-[#000d26]",
-      accent: "#a855f7",
-      cta: "Shop Smartphones",
-      category: "Smartphones",
-      badge: "NEW 2050",
-      img: "https://images.unsplash.com/photo-1598327105666-5b89351aff97?auto=format&fit=crop&w=800&q=90",
-      price: "$1,499",
-      features: ["Quantum Core", "6G Sub-THz", "Holographic Display"]
+      agent: "Finance Agent",
+      color: "text-amber-400 border-amber-500/20 bg-amber-500/5",
+      text: "The current pricing structure takes 14% of user liquidity buffer. I recommend waiting for the predicted 10% price drop on Friday.",
+      impact: -5
     },
     {
-      title: "Nexus Workstation Pro",
-      subtitle: "64-Core beast. 256GB unified memory. Engineered for the future of computing.",
-      bg: "from-[#001020] via-[#002040] to-[#000d1a]",
-      accent: "#00f0ff",
-      cta: "Explore Workstations",
-      category: "Workstations",
-      badge: "BESTSELLER",
-      img: "https://images.unsplash.com/photo-1587202372775-e229f172b9d7?auto=format&fit=crop&w=800&q=90",
-      price: "$4,299",
-      features: ["64-Core CPU", "256GB RAM", "Liquid Cooling"]
+      agent: "Tech Agent",
+      color: "text-cyan-400 border-cyan-500/20 bg-cyan-500/5",
+      text: "This hardware upgrade features a custom liquid-cooled neural chip, increasing workflow compilation speeds by 40%. The technical debt payoff is instant.",
+      impact: 18
     },
     {
-      title: "Nexus AeroBook Pro",
-      subtitle: "Ultra-slim carbon fiber. Dual OLED display. 2050's thinnest powerhouse.",
-      bg: "from-[#001a10] via-[#002a20] to-[#000d08]",
-      accent: "#10b981",
-      cta: "View Laptops",
-      category: "Laptops",
-      badge: "PRO PICK",
-      img: "https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?auto=format&fit=crop&w=800&q=90",
-      price: "$2,499",
-      features: ["Dual OLED", "Carbon Fiber", "Mag Charging"]
+      agent: "Future Self Agent",
+      color: "text-purple-400 border-purple-500/20 bg-purple-500/5",
+      text: "Simulations reveal that acquiring this hardware boosts high-yield career path trajectories by 14 months. ROI timeline is highly validated.",
+      impact: 15
     },
     {
-      title: "AeroPhone Pro Max",
-      subtitle: "Liquid metal frame. Folding OLED. AI companion chip. The phone of tomorrow.",
-      bg: "from-[#1a0a00] via-[#2a1500] to-[#0d0500]",
-      accent: "#f59e0b",
-      cta: "Shop Smartphones",
-      category: "Smartphones",
-      badge: "FLASH SALE",
-      img: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=800&q=90",
-      price: "$1,299",
-      features: ["Folding OLED", "AI Chip", "Nano-Charging"]
+      agent: "Deal Hunter Agent",
+      color: "text-emerald-400 border-emerald-500/20 bg-emerald-500/5",
+      text: "I found a parallel buyer pool in the Bangalore node. If we group our orders, the seller agent will trigger a bulk 12% cash-back rebate.",
+      impact: 10
+    },
+    {
+      agent: "Sustainability Agent",
+      color: "text-lime-400 border-lime-500/20 bg-lime-500/5",
+      text: "Constructed using 85% post-consumer composites and shipped via carbon-offset autonomous grids. Overall ecosystem score is rated A+.",
+      impact: 5
     }
   ];
 
-  useEffect(() => {
-    setMounted(true);
-    const prods = mockDb.getProducts({});
-    setProducts(prods);
+  const runAgentDebate = () => {
+    setIsDebating(true);
+    setArenaMessages([]);
+    setConsensusScore(50);
+    let step = 0;
 
-    // Read browsing history from local storage
-    if (typeof window !== "undefined") {
-      const ids = JSON.parse(localStorage.getItem("nexus_recently_viewed") || "[]");
-      if (ids.length > 0) {
-        const items = ids.map((id: string) => mockDb.getProductById(id)).filter(Boolean);
-        setRecentlyViewedProds(items);
-        
-        // Dynamic category matching AI recommendations
-        const categories = Array.from(new Set(items.map((p: any) => p.category)));
-        const filtered = prods.filter((p: any) => categories.includes(p.category) && !ids.includes(p._id));
-        setRecommended(filtered.slice(0, 8));
+    const interval = setInterval(() => {
+      if (step < debateSteps.length) {
+        const nextMsg = debateSteps[step]!;
+        setArenaMessages(prev => [...prev, nextMsg]);
+        setConsensusScore(prev => Math.min(100, Math.max(0, prev + nextMsg.impact)));
+        step++;
       } else {
-        // Fallback to top-rated
-        setRecommended(prods.filter((p: any) => p.rating > 4.7).slice(0, 8));
+        clearInterval(interval);
+        setIsDebating(false);
       }
-    }
-
-    const rotationTimer = setInterval(() => {
-      setHeroIndex(prev => (prev + 1) % heroBanners.length);
-    }, 5000);
-
-    const countdownTimer = setInterval(() => {
-      setCountdown(prev => {
-        if (prev.seconds > 0) return { ...prev, seconds: prev.seconds - 1 };
-        if (prev.minutes > 0) return { ...prev, minutes: prev.minutes - 1, seconds: 59 };
-        if (prev.hours > 0) return { ...prev, hours: prev.hours - 1, minutes: 59, seconds: 59 };
-        return { hours: 11, minutes: 59, seconds: 59 };
-      });
-    }, 1000);
-
-    return () => { clearInterval(rotationTimer); clearInterval(countdownTimer); };
-  }, []);
-
-  const handleAddToCart = (e: React.MouseEvent, product: any) => {
-    e.stopPropagation();
-    e.preventDefault();
-    dispatch(addToCart({
-      id: product._id,
-      name: product.name,
-      price: product.price,
-      quantity: 1,
-      image: product.images?.[0] || ""
-    }));
-    setAddedToCart(prev => new Set([...prev, product._id]));
-    setTimeout(() => {
-      setAddedToCart(prev => { const n = new Set(prev); n.delete(product._id); return n; });
-    }, 2000);
+    }, 1800);
   };
 
-  const handleWishlist = (e: React.MouseEvent, productId: string) => {
-    e.stopPropagation();
-    e.preventDefault();
-    setWishlistedIds(prev => {
-      const n = new Set(prev);
-      if (n.has(productId)) n.delete(productId);
-      else n.add(productId);
-      return n;
+  // 4. Future Self Timeline Slider Change
+  const handleTimelineChange = (val: number) => {
+    setTimelineValue(val);
+    const targetYear = 2026 + val;
+    let career = "Tech Support Specialist";
+    let skills: string[] = [];
+    let procurements: any[] = [];
+    let scaleMultiplier = 1;
+
+    if (val < 8) {
+      career = "Lead Synthetic Interface Designer";
+      skills = ["Synaptic Mapping", "React Quantum Frameworks", "Node UI Structuring"];
+      procurements = [
+        { name: "AeroBook Pro", desc: "Core neural processing rig", price: "$2,499" },
+        { name: "Quest VR Node", desc: "Immersion development node", price: "$1,199" }
+      ];
+      scaleMultiplier = 1.2;
+    } else if (val < 16) {
+      career = "Autonomous System Architect";
+      skills = ["Multi-Agent Protocol Orchestration", "Decentralized Liquidity Staking", "LLM Model Compilation"];
+      procurements = [
+        { name: "Nexus Workstation Pro", desc: "64-Core master compiler node", price: "$4,299" },
+        { name: "Haptic Sensor Suit", desc: "Reality simulator bio-feedback link", price: "$1,899" }
+      ];
+      scaleMultiplier = 2.4;
+    } else {
+      career = "Reality Intelligence Director";
+      skills = ["Temporal Timeline Vectoring", "Simulated Economics Regulation", "Synthetic Species Orchestration"];
+      procurements = [
+        { name: "Nexus Quantum Core Terminal", desc: "Entanglement link grid node", price: "$8,990" },
+        { name: "Bio-Neural Interface Kit", desc: "Direct cerebral network adapter", price: "$3,499" }
+      ];
+      scaleMultiplier = 5.8;
+    }
+
+    setSimulatorData({
+      year: targetYear,
+      career,
+      skills,
+      procurements,
+      graph: [
+        { name: "2026", worth: 85 * scaleMultiplier, aura: 60 * scaleMultiplier },
+        { name: "2031", worth: 180 * scaleMultiplier, aura: 85 * scaleMultiplier },
+        { name: "2036", worth: 320 * scaleMultiplier, aura: 110 * scaleMultiplier },
+        { name: "2041", worth: 680 * scaleMultiplier, aura: 145 * scaleMultiplier },
+        { name: "2046", worth: 1200 * scaleMultiplier, aura: 190 * scaleMultiplier },
+        { name: "2051", worth: 2400 * scaleMultiplier, aura: 240 * scaleMultiplier }
+      ]
     });
   };
 
-  const handleNewsletterSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newsletterEmail) return;
-    setNewsletterSubscribed(true);
-    setNewsletterEmail("");
+  // 6. Opportunity Radar Click
+  const handleRadarClick = (x: number, y: number, name: string, type: string, desc: string, action: string) => {
+    setSelectedOpportunity({ title: name, type, desc, action, x, y });
   };
 
-  // Category grid
-  const gridCategories = [
-    { title: "Smartphones", desc: "Holographic & Quantum Phones", img: "https://images.unsplash.com/photo-1598327105666-5b89351aff97?auto=format&fit=crop&w=400&q=80", link: "/shop?category=Smartphones", color: "#a855f7" },
-    { title: "Workstations", desc: "Next-gen computing towers", img: "https://images.unsplash.com/photo-1587202372775-e229f172b9d7?auto=format&fit=crop&w=400&q=80", link: "/shop?category=Workstations", color: "#00f0ff" },
-    { title: "Laptops", desc: "Ultra-slim carbon fiber books", img: "https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?auto=format&fit=crop&w=400&q=80", link: "/shop?category=Laptops", color: "#10b981" },
-    { title: "VR & AR Tech", desc: "Spatial computing headsets", img: "https://images.unsplash.com/photo-1593508512255-86ab42a8e620?auto=format&fit=crop&w=400&q=80", link: "/shop?category=VR%20Tech", color: "#f59e0b" },
-    { title: "Gaming Gear", desc: "Mechanical keyboards & mice", img: "https://images.unsplash.com/photo-1618384887929-16ec33fab9ef?auto=format&fit=crop&w=400&q=80", link: "/shop?category=Gaming", color: "#ef4444" },
-    { title: "AI Devices", desc: "Smart home & AI hubs", img: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=400&q=80", link: "/shop?category=AI%20Devices", color: "#8b5cf6" },
-    { title: "Monitors", desc: "Curved spatial displays", img: "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?auto=format&fit=crop&w=400&q=80", link: "/shop?category=Monitors", color: "#06b6d4" },
-    { title: "Audio", desc: "Spatial audio headsets", img: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=400&q=80", link: "/shop?category=Audio", color: "#f97316" }
-  ];
+  // 7. Reality Sandbox Simulation Run
+  const runSandboxSimulation = () => {
+    const isHighInvestment = sandboxInvestment > 10;
+    const factor = isHighInvestment ? 1.3 : 0.85;
 
-  // Dynamic Product Filters for Homepage Categories
-  const smartphones = products.filter(p => p.category === "Smartphones").slice(0, 6);
-  const todayDeals = products.filter(p => p.discount > 0).slice(0, 8);
-  const trendingProducts = products.filter(p => p.rating >= 4.7).slice(0, 8);
-  const topRated = trendingProducts;
-  const bestSellers = [...products].sort((a, b) => (b.numReviews || 0) - (a.numReviews || 0)).slice(0, 8);
-  const newArrivals = products.filter(p => p.name.includes("16") || p.name.includes("Pro") || p.specifications?.["Model Year"] === "2026").slice(0, 8);
-  const flashSales = products.filter(p => p.discount >= 12).slice(0, 6);
-  const flashDeals = flashSales;
-  const continueShopping = recentlyViewedProds[0] || null;
+    setSandboxMetrics([
+      { name: "Capital Worth", before: 80, after: Math.round(80 - (20 * (12 / sandboxInvestment))) },
+      { name: "Skill Acceleration", before: 40, after: Math.round(Math.min(98, 40 + (35 * factor))) },
+      { name: "Cognitive Load", before: 30, after: Math.round(30 + (25 * factor)) },
+      { name: "Aura / Peer Status", before: 50, after: Math.round(Math.min(95, 50 + (30 * factor))) }
+    ]);
+  };
 
-  const activeBanner = heroBanners[heroIndex]!;
+  // Dispatch Auto-buy
+  const dispatchAutoBuy = () => {
+    setAutoBuyStatus("ACTIVE");
+    setTimeout(() => {
+      setAutoBuyStatus("MONITORING (Twin active)");
+      setSystemLogs(prev => [`[${new Date().toTimeString().split(' ')[0]}] [AUTONOMOUS] Configured buy limit at $${autoBuyTarget} on ${autoBuyProduct}.`, ...prev]);
+    }, 1000);
+  };
+
+  // Add to cart callback helper
+  const handleAddProcurement = (item: any) => {
+    dispatch(addToCart({
+      id: "procurement-" + Math.random().toString(36).substring(2, 7),
+      name: item.name,
+      price: parseFloat(item.price.replace('$', '').replace(',', '')),
+      quantity: 1,
+      image: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=200&q=80"
+    }));
+    alert(`${item.name} added to your procurement cart.`);
+  };
 
   return (
-    <main className="w-full bg-[#0b0f19] min-h-screen text-white font-sans flex flex-col overflow-x-hidden">
-      
+    <main className="w-full bg-[#030712] min-h-screen text-white font-sans flex flex-col relative overflow-x-hidden">
+      {/* Three.js Holographic Ambient Background */}
+      {mounted && <Scene />}
+
+      {/* Top Navbar */}
       <NavBar />
 
-      {/* HERO BANNER */}
-      <section ref={heroRef} className="relative w-full h-[560px] md:h-[620px] overflow-hidden">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={heroIndex}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.6 }}
-            className={`absolute inset-0 bg-gradient-to-r ${activeBanner.bg}`}
-          >
-            {/* Animated background particles */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
-              {mounted && [...Array(20)].map((_, i) => (
-                <div
-                  key={i}
-                  className="absolute rounded-full opacity-20 animate-pulse"
-                  style={{
-                    width: `${Math.random() * 6 + 2}px`,
-                    height: `${Math.random() * 6 + 2}px`,
-                    background: activeBanner.accent,
-                    left: `${Math.random() * 100}%`,
-                    top: `${Math.random() * 100}%`,
-                    animationDelay: `${Math.random() * 3}s`,
-                    animationDuration: `${Math.random() * 3 + 2}s`
-                  }}
-                />
-              ))}
+      {/* Main Dashboard Shell */}
+      <div className="w-full max-w-[1720px] mx-auto px-4 md:px-8 py-8 flex flex-col lg:flex-row gap-8 relative z-10 flex-1">
+        
+        {/* HUD SIDEBAR NAVIGATION DECK */}
+        <aside className="w-full lg:w-64 flex-shrink-0 flex lg:flex-col gap-2 overflow-x-auto lg:overflow-x-visible pb-4 lg:pb-0 scrollbar-none sticky top-24 z-20">
+          <div className="flex lg:flex-col w-full gap-2 bg-slate-950/80 backdrop-blur-xl border border-white/5 p-3 rounded-2xl shadow-2xl">
+            <div className="hidden lg:flex items-center gap-2 px-3 py-2 border-b border-white/5 mb-2">
+              <Activity className="w-4 h-4 text-cyan-400 animate-pulse" />
+              <span className="text-[10px] font-black uppercase tracking-widest text-cyan-400 font-mono">
+                OS NAVIGATION
+              </span>
             </div>
 
-            {/* Glow orbs */}
-            <div
-              className="absolute top-[-100px] left-[-100px] w-[500px] h-[500px] rounded-full blur-[120px] opacity-30"
-              style={{ background: activeBanner.accent }}
-            />
-            <div
-              className="absolute bottom-[-100px] right-[200px] w-[400px] h-[400px] rounded-full blur-[100px] opacity-20"
-              style={{ background: activeBanner.accent }}
-            />
-
-            <div className="relative z-10 h-full max-w-[1480px] mx-auto px-6 md:px-16 flex items-center">
-              {/* Left content */}
-              <div className="flex-1 max-w-xl space-y-5">
-                <motion.div
-                  initial={{ opacity: 0, x: -30 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.2, duration: 0.5 }}
+            {[
+              { id: "COMMAND", label: "Command Center", icon: Terminal },
+              { id: "INTELLIGENCE", label: "Product Intel", icon: Search },
+              { id: "ARENA", label: "Agent Arena", icon: MessageSquare },
+              { id: "DESTINY", label: "Destiny Simulator", icon: GitBranch },
+              { id: "TWIN", label: "Digital Twin Lab", icon: UserCheck },
+              { id: "RADAR", label: "Opportunity Radar", icon: Compass },
+              { id: "SANDBOX", label: "Reality Sandbox", icon: Layers },
+              { id: "GLOBAL", label: "Global Radar", icon: Globe2 },
+              { id: "AUTONOMOUS", label: "Auto-Shopping", icon: Cpu },
+              { id: "FEED", label: "System Alerts", icon: AlertCircle }
+            ].map(sec => {
+              const Icon = sec.icon;
+              const isActive = activeHUDSection === sec.id;
+              return (
+                <button
+                  key={sec.id}
+                  onClick={() => {
+                    setActiveHUDSection(sec.id);
+                    document.getElementById(sec.id)?.scrollIntoView({ behavior: "smooth", block: "center" });
+                  }}
+                  className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-[11px] font-bold uppercase tracking-wider transition-all border text-left flex-shrink-0 cursor-pointer ${
+                    isActive
+                      ? "bg-cyan-500/10 border-cyan-500/40 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.15)]"
+                      : "bg-transparent border-transparent text-gray-400 hover:bg-white/5 hover:text-white"
+                  }`}
                 >
-                  <span
-                    className="inline-block text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full mb-3 border"
-                    style={{ color: activeBanner.accent, borderColor: `${activeBanner.accent}50`, background: `${activeBanner.accent}15` }}
-                  >
-                    {activeBanner.badge}
-                  </span>
-                  
-                  <h1 className="text-4xl md:text-6xl font-black leading-tight tracking-tight text-white">
-                    {activeBanner.title}
-                  </h1>
-                  
-                  <p className="text-gray-300 text-sm md:text-base leading-relaxed mt-3 max-w-md">
-                    {activeBanner.subtitle}
-                  </p>
+                  <Icon className={`w-4 h-4 ${isActive ? "text-cyan-400" : "text-gray-500"}`} />
+                  <span>{sec.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </aside>
 
-                  {/* Feature pills */}
-                  <div className="flex flex-wrap gap-2 mt-4">
-                    {activeBanner.features.map((feat, fi) => (
-                      <span
-                        key={fi}
-                        className="text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full border"
-                        style={{ borderColor: `${activeBanner.accent}40`, color: activeBanner.accent, background: `${activeBanner.accent}10` }}
-                      >
-                        {feat}
+        {/* HUD CONTENT BOARD */}
+        <div className="flex-1 space-y-8 min-w-0">
+          
+          {/* SECTION 2: AI COMMAND CENTER (HERO VIEW) */}
+          <section id="COMMAND" className="scroll-mt-28">
+            <div className="relative overflow-hidden rounded-3xl border border-cyan-500/20 bg-slate-900/40 backdrop-blur-xl p-6 md:p-8 shadow-[0_0_50px_rgba(6,182,212,0.05)]">
+              {/* Outer grid decor */}
+              <div className="absolute inset-0 bg-grid-pattern opacity-10 pointer-events-none" />
+              <div className="absolute top-0 right-0 w-80 h-80 rounded-full bg-cyan-500/10 blur-[80px] pointer-events-none" />
+              
+              <div className="relative z-10">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-b border-white/5 pb-6">
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Sparkles className="w-5 h-5 text-cyan-400 animate-pulse" />
+                      <span className="text-[9px] font-black uppercase tracking-widest text-cyan-400 bg-cyan-500/10 px-3 py-1 rounded-full border border-cyan-500/20 font-mono">
+                        REALITY OVERLORD PROJ ACTIVE
                       </span>
+                    </div>
+                    <h1 className="text-3xl md:text-5xl font-black tracking-tight text-white uppercase font-sans">
+                      NEXUS X <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-indigo-500">COMMERCE OPERATING SYSTEM</span>
+                    </h1>
+                    <p className="text-gray-400 text-xs mt-2 max-w-2xl leading-relaxed">
+                      Orchestrating multi-agent purchase debates, simulating parallel lifetime career branches, and utilizing autonomous opportunity arbitrage twins. Rejecting traditional storefront grids for direct reality optimization.
+                    </p>
+                  </div>
+
+                  {/* Telemetry metrics bar */}
+                  <div className="flex flex-wrap gap-4 bg-slate-950/80 p-4 rounded-2xl border border-white/5 shadow-inner font-mono">
+                    <div className="px-4 border-r border-white/5">
+                      <div className="text-[8px] text-gray-500 uppercase tracking-widest">Neural Sync</div>
+                      <div className="text-sm font-black text-cyan-400">{telemetry.neuralSync}%</div>
+                    </div>
+                    <div className="px-4 border-r border-white/5">
+                      <div className="text-[8px] text-gray-500 uppercase tracking-widest">Active Agents</div>
+                      <div className="text-sm font-black text-white">{telemetry.activeAgents}</div>
+                    </div>
+                    <div className="px-4 border-r border-white/5">
+                      <div className="text-[8px] text-gray-500 uppercase tracking-widest">CPU LOAD</div>
+                      <div className="text-sm font-black text-amber-500">{telemetry.quantumLoad}%</div>
+                    </div>
+                    <div className="px-4">
+                      <div className="text-[8px] text-gray-500 uppercase tracking-widest">TEMPORAL SCRIPTS</div>
+                      <div className="text-sm font-black text-purple-400">{telemetry.simulatedTimelines.toLocaleString()}</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* System logs feed console */}
+                <div className="mt-6">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Terminal className="w-4 h-4 text-cyan-400" />
+                    <h4 className="text-[10px] font-black uppercase tracking-widest text-white font-mono">System Live telemetry feed</h4>
+                  </div>
+                  <div className="font-mono text-[10px] text-cyan-500/80 space-y-2 bg-black/60 p-4 rounded-xl border border-white/5 h-[140px] overflow-y-auto custom-scrollbar select-none">
+                    {systemLogs.map((log, index) => (
+                      <div key={index} className="flex items-start gap-2">
+                        <span className="text-cyan-600 shrink-0">&gt;&gt;</span>
+                        <span className="break-all">{log}</span>
+                      </div>
                     ))}
                   </div>
-
-                  <div className="flex items-center gap-4 mt-6">
-                    <span className="text-3xl font-black" style={{ color: activeBanner.accent }}>
-                      {activeBanner.price}
-                    </span>
-                    <Link
-                      href={`/shop?category=${encodeURIComponent(activeBanner.category)}`}
-                      className="group px-6 py-3 rounded-full font-bold text-sm text-black flex items-center gap-2 transition-all hover:scale-105 active:scale-95"
-                      style={{ background: `linear-gradient(135deg, ${activeBanner.accent}, ${activeBanner.accent}cc)` }}
-                    >
-                      {activeBanner.cta}
-                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                    </Link>
-                  </div>
-                </motion.div>
-              </div>
-
-              {/* Right product image */}
-              <div className="hidden md:flex flex-1 items-center justify-center relative">
-                <motion.div
-                  initial={{ opacity: 0, y: 30, scale: 0.9 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  transition={{ delay: 0.3, duration: 0.6, type: "spring" }}
-                  className="relative"
-                >
-                  {/* Glow behind image */}
-                  <div
-                    className="absolute inset-0 blur-[60px] opacity-40 rounded-full scale-110"
-                    style={{ background: activeBanner.accent }}
-                  />
-                  <img
-                    src={activeBanner.img}
-                    alt={activeBanner.title}
-                    className="relative z-10 w-[320px] h-[380px] object-contain drop-shadow-2xl"
-                    style={{ filter: `drop-shadow(0 0 40px ${activeBanner.accent}60)` }}
-                  />
-                </motion.div>
-              </div>
-            </div>
-          </motion.div>
-        </AnimatePresence>
-
-        {/* Carousel controls */}
-        <button
-          onClick={() => setHeroIndex(prev => (prev - 1 + heroBanners.length) % heroBanners.length)}
-          className="absolute left-4 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white border border-white/20 transition-all"
-        >
-          <ChevronLeft className="w-5 h-5" />
-        </button>
-        <button
-          onClick={() => setHeroIndex(prev => (prev + 1) % heroBanners.length)}
-          className="absolute right-4 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white border border-white/20 transition-all"
-        >
-          <ChevronRight className="w-5 h-5" />
-        </button>
-
-        {/* Carousel dots */}
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex gap-2">
-          {heroBanners.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setHeroIndex(i)}
-              className={`rounded-full transition-all ${i === heroIndex ? "w-8 h-2 bg-white" : "w-2 h-2 bg-white/30"}`}
-            />
-          ))}
-        </div>
-
-        {/* Bottom fade */}
-        <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-[#0b0f19] to-transparent z-10" />
-      </section>
-
-      {/* TRUST BADGES */}
-      <section className="bg-[#111827] border-y border-white/5">
-        <div className="max-w-[1480px] mx-auto px-6 py-4 grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[
-            { icon: Truck, label: "Free 1-Day Shipping", desc: "On orders over $299", color: "#00f0ff" },
-            { icon: ShieldCheck, label: "Quantum Encrypted", desc: "Military-grade security", color: "#10b981" },
-            { icon: RotateCcw, label: "30-Day Returns", desc: "Hassle-free returns", color: "#f59e0b" },
-            { icon: Headphones, label: "24/7 AI Support", desc: "Instant AI assistance", color: "#a855f7" }
-          ].map((item, i) => (
-            <div key={i} className="flex items-center gap-3 py-2">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: `${item.color}15` }}>
-                <item.icon className="w-5 h-5" style={{ color: item.color }} />
-              </div>
-              <div>
-                <div className="text-xs font-bold text-white">{item.label}</div>
-                <div className="text-[10px] text-gray-500">{item.desc}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* MAIN CONTENT */}
-      <section className="max-w-[1480px] mx-auto px-4 md:px-8 py-10 w-full space-y-12">
-
-        {/* CATEGORY GRID */}
-        <div>
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-black text-white uppercase tracking-tight flex items-center gap-2">
-              <Globe className="w-5 h-5 text-[#ff9900]" />
-              Shop by Category
-            </h2>
-            <Link href="/shop" className="text-xs font-semibold text-[#00f0ff] hover:text-white transition-colors flex items-center gap-1">
-              All Categories <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
-            {gridCategories.map((cat, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.05, duration: 0.4 }}
-              >
-                <Link
-                  href={cat.link}
-                  className="group flex flex-col items-center gap-3 p-4 rounded-2xl bg-[#111827] border border-white/5 hover:border-white/20 transition-all hover:scale-105 hover:-translate-y-1 cursor-pointer text-center"
-                >
-                  <div className="w-16 h-16 rounded-xl overflow-hidden border-2 border-transparent group-hover:border-white/20 transition-all" style={{ boxShadow: `0 0 0 0 ${cat.color}` }}>
-                    <img src={cat.img} alt={cat.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
-                  </div>
-                  <div>
-                    <div className="text-[11px] font-bold text-white group-hover:text-[#ff9900] transition-colors">{cat.title}</div>
-                    <div className="text-[9px] text-gray-500 mt-0.5 hidden lg:block">{cat.desc}</div>
-                  </div>
-                </Link>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-
-        {/* CONTINUE SHOPPING & RECENTLY VIEWED PANEL */}
-        {recentlyViewedProds.length > 0 && (
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 text-left">
-            {/* Continue Shopping */}
-            {continueShopping && (
-              <div className="lg:col-span-1 bg-white rounded-2xl p-5 border border-gray-100 hover:shadow-xl transition-all flex flex-col justify-between h-full">
-                <div>
-                  <h3 className="text-[10px] font-black uppercase tracking-wider text-gray-400 font-mono mb-2">Continue Shopping</h3>
-                  <div className="h-32 w-full bg-white flex items-center justify-center p-2 rounded-xl mb-4 border border-gray-50">
-                    <img src={continueShopping.images?.[0]} alt={continueShopping.name} className="h-28 object-contain" />
-                  </div>
-                  <h4 className="text-xs font-bold text-gray-900 truncate leading-snug">{continueShopping.name}</h4>
-                  <p className="text-[10px] text-gray-500 line-clamp-2 mt-1">{continueShopping.description}</p>
-                </div>
-                <div className="mt-4 flex items-center justify-between border-t border-gray-100 pt-3">
-                  <span className="font-mono text-[#b12704] font-black text-sm">${continueShopping.price}</span>
-                  <Link href={`/product/${continueShopping._id}`} className="text-xs text-[#00f0ff] hover:text-[#00c0cc] hover:underline font-bold flex items-center gap-0.5">Resume <ArrowRight className="w-3.5 h-3.5"/></Link>
                 </div>
               </div>
-            )}
-            
-            {/* Recently Viewed */}
-            <div className={`${continueShopping ? "lg:col-span-3" : "lg:col-span-4"} bg-[#111827] rounded-2xl p-5 border border-white/5`}>
-              <h3 className="text-[10px] font-black uppercase tracking-wider text-gray-400 font-mono mb-4">Your Browsing History</h3>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                {recentlyViewedProds.slice(0, 4).map((prod) => (
-                  <Link 
-                    key={prod._id}
-                    href={`/product/${prod._id}`}
-                    className="flex flex-col bg-white p-3 rounded-xl border border-gray-100 hover:border-[#ff9900]/40 transition-all h-full"
-                  >
-                    <div className="h-24 w-full flex items-center justify-center p-1 bg-white">
-                      <img src={prod.images?.[0]} alt={prod.name} className="h-20 object-contain" />
-                    </div>
-                    <span className="text-[10px] font-bold text-gray-900 truncate mt-2 block">{prod.name}</span>
-                    <span className="text-[10px] text-[#b12704] font-mono font-bold mt-1 block">${prod.price}</span>
-                  </Link>
-                ))}
-              </div>
             </div>
-          </div>
-        )}
-          {/* TODAY'S DEALS SECTION */}
-          <div>
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-2">
-                <div className="w-1 h-6 rounded-full bg-gradient-to-b from-[#ff9900] to-[#ff6600]" />
-                <h2 className="text-xl font-black text-white uppercase tracking-tight">Today&apos;s Deals</h2>
-                <span className="text-[10px] font-black bg-[#ff9900]/20 text-[#ff9900] border border-[#ff9900]/30 px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-                  Top Savings
-                </span>
-              </div>
-              <Link href="/shop" className="text-xs font-semibold text-[#ff9900] hover:text-white transition-colors flex items-center gap-1">
-                View All Deals <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
-            </div>
+          </section>
+
+          {/* TWO-COLUMN GRID OF FUNCTION WIDGETS */}
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
             
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-              {todayDeals.slice(0, 6).map((prod, i) => (
-                <motion.div
-                  key={prod._id}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.05 }}
-                >
-                  <Link
-                    key={prod._id}
-                    href={`/product/${prod._id}`}
-                    className="group flex flex-col bg-white rounded-2xl overflow-hidden border border-gray-100 hover:border-[#ff9900]/40 hover:shadow-xl transition-all cursor-pointer h-full"
-                  >
-                    <div className="bg-white p-4 flex items-center justify-center h-48 relative">
-                      <img
-                        src={prod.images?.[0]}
-                        alt={prod.name}
-                        className="h-36 w-full object-contain group-hover:scale-105 transition-transform duration-300 drop-shadow-md"
-                      />
-                      <button
-                        onClick={(e) => handleWishlist(e, prod._id)}
-                        className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white shadow-md flex items-center justify-center border border-gray-100 hover:border-red-300 transition-all z-10"
-                      >
-                        <Heart className={`w-4 h-4 ${wishlistedIds.has(prod._id) ? "fill-red-500 text-red-500" : "text-gray-400"}`} />
-                      </button>
-                      {prod.discount > 0 && (
-                        <span className="absolute top-3 left-3 bg-[#b12704] text-white text-[9px] font-black px-2 py-0.5 rounded-full uppercase">
-                          -{prod.discount}% OFF
-                        </span>
-                      )}
-                    </div>
-                    
-                    <div className="p-3 bg-white border-t border-gray-50 flex flex-col flex-1">
-                      <div className="text-[9px] text-[#ff9900] font-black uppercase tracking-wider mb-1">{prod.category}</div>
-                      <h3 className="text-xs font-bold text-gray-900 line-clamp-2 group-hover:text-[#ff9900] transition-colors leading-snug flex-1">{prod.name}</h3>
-                      <div className="flex items-center gap-1 mt-1.5">
-                        {Array.from({ length: 5 }).map((_, si) => (
-                          <Star key={si} className={`w-2.5 h-2.5 ${si < Math.floor(prod.rating || 4.5) ? "fill-yellow-400 text-yellow-400" : "text-gray-200"}`} />
-                        ))}
-                        <span className="text-[9px] text-gray-400 ml-0.5">({prod.numReviews})</span>
+            {/* MODULE 1: UNIVERSAL PRODUCT INTELLIGENCE ENGINE */}
+            <section id="INTELLIGENCE" className="scroll-mt-28">
+              <div className="rounded-3xl border border-white/10 bg-slate-950/50 backdrop-blur-xl p-6 shadow-2xl h-full flex flex-col justify-between">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="p-2.5 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                        <Search className="w-5 h-5" />
                       </div>
-                      <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-50">
-                        <div>
-                          <span className="text-sm font-black text-gray-900">${prod.price.toLocaleString()}</span>
-                          {prod.originalPrice > prod.price && (
-                            <span className="text-[9px] text-gray-400 line-through ml-1 block">${prod.originalPrice}</span>
+                      <div className="text-left">
+                        <h2 className="text-sm font-black uppercase tracking-wider text-white">Universal Product Intelligence</h2>
+                        <p className="text-[10px] text-gray-400">Search globally across Amazon, Flipkart, Myntra, Croma, Nexus</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Enter product keyword (e.g. Phone, Laptop)"
+                      className="flex-1 bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-xs focus:outline-none focus:border-cyan-500 text-white font-mono"
+                    />
+                    <button
+                      onClick={() => handleProductSearch(searchQuery)}
+                      disabled={isSearching}
+                      className="bg-cyan-500 hover:bg-cyan-600 text-black px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1 cursor-pointer shrink-0"
+                    >
+                      {isSearching ? "Crawling..." : "Inspect Engine"}
+                    </button>
+                  </div>
+
+                  {searchReport && (
+                    <div className="space-y-4 pt-2 text-left">
+                      <div className="flex items-center justify-between border-b border-white/5 pb-2">
+                        <h3 className="text-xs font-bold text-cyan-400 uppercase truncate max-w-[70%]">{searchReport.product.name}</h3>
+                        <span className="text-[10px] bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 px-2.5 py-0.5 rounded-full font-mono font-bold">
+                          AI SCORE: {searchReport.aiScore}%
+                        </span>
+                      </div>
+
+                      {/* Retailer price rows */}
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+                        {[
+                          { name: "Nexus Buy", price: `$${searchReport.nexusPrice}`, color: "text-emerald-400 border-emerald-500/20 bg-emerald-500/5 font-black" },
+                          { name: "Amazon", price: `$${searchReport.amazonPrice}`, color: "text-gray-400 border-white/5 bg-white/5" },
+                          { name: "Flipkart", price: `$${searchReport.flipkartPrice}`, color: "text-gray-400 border-white/5 bg-white/5" },
+                          { name: "Croma Retail", price: `$${searchReport.reliancePrice}`, color: "text-gray-400 border-white/5 bg-white/5" }
+                        ].map((ret, rIdx) => (
+                          <div key={rIdx} className={`p-2.5 rounded-xl border ${ret.color} flex flex-col justify-center`}>
+                            <span className="text-[9px] text-gray-500 uppercase tracking-wider">{ret.name}</span>
+                            <span className="text-xs mt-1">{ret.price}</span>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Drop probability & prediction graph */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+                        <div className="bg-black/30 p-3 rounded-xl border border-white/5 flex items-center justify-between font-mono">
+                          <div>
+                            <span className="text-[8px] text-gray-500 uppercase tracking-widest block">Drop Probability</span>
+                            <span className="text-base font-black text-amber-500">{searchReport.dropChance}%</span>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-[8px] text-gray-500 uppercase tracking-widest block">Expected within</span>
+                            <span className="text-xs text-white">{searchReport.dropTime}</span>
+                          </div>
+                        </div>
+
+                        {/* Recharts graph */}
+                        <div className="h-[90px] w-full">
+                          {mounted && (
+                            <ResponsiveContainer width="100%" height="100%">
+                              <AreaChart data={searchReport.priceHistory} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
+                                <defs>
+                                  <linearGradient id="priceGlow" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.3}/>
+                                    <stop offset="95%" stopColor="#06b6d4" stopOpacity={0}/>
+                                  </linearGradient>
+                                </defs>
+                                <XAxis dataKey="month" tick={{ fill: "#6b7280", fontSize: 8 }} />
+                                <YAxis tick={{ fill: "#6b7280", fontSize: 8 }} />
+                                <Tooltip contentStyle={{ background: "#0f172a", border: "1px solid rgba(255,255,255,0.1)", fontSize: 10 }} />
+                                <Area type="monotone" dataKey="price" stroke="#06b6d4" fillOpacity={1} fill="url(#priceGlow)" />
+                              </AreaChart>
+                            </ResponsiveContainer>
                           )}
                         </div>
                       </div>
-                      <button
-                        onClick={(e) => handleAddToCart(e, prod)}
-                        className={`w-full mt-2.5 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider transition-all ${
-                          addedToCart.has(prod._id)
-                            ? "bg-green-500 text-white"
-                            : "bg-[#ff9900] hover:bg-[#f3a847] text-black border border-[#a88734]"
-                        }`}
-                      >
-                        {addedToCart.has(prod._id) ? "✓ Added" : "Add to Cart"}
-                      </button>
-                    </div>
-                  </Link>
-                </motion.div>
-              ))}
-            </div>
-          </div>
 
-        {/* FLASH SALE TIMER */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#1a0010] via-[#2a0020] to-[#1a0010] border border-[#ff007f]/20 p-6 md:p-8">
-          <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            <div className="absolute top-[-50px] left-[-50px] w-[300px] h-[300px] rounded-full blur-[80px] opacity-30 bg-[#ff007f]" />
-            <div className="absolute bottom-[-50px] right-[100px] w-[200px] h-[200px] rounded-full blur-[60px] opacity-20 bg-[#ff9900]" />
-          </div>
-          <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-6">
-            <div className="space-y-2 text-center lg:text-left">
-              <div className="flex items-center gap-2 justify-center lg:justify-start">
-                <Zap className="w-5 h-5 text-[#ff007f] animate-pulse" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-[#ff007f] bg-[#ff007f]/10 px-3 py-1 rounded-full border border-[#ff007f]/30">
-                  Lightning Flash Deal
-                </span>
-              </div>
-              <h3 className="text-2xl md:text-3xl font-black uppercase tracking-tight text-white">
-                Double Quantum Points
-              </h3>
-              <p className="text-sm text-gray-400 max-w-md">
-                Every order placed in this window earns 2× loyalty points. Stack rewards across Nexus ecosystem.
-              </p>
-              <Link href="/shop" className="inline-flex items-center gap-2 mt-3 px-6 py-2.5 bg-gradient-to-r from-[#ff007f] to-[#ff4d94] text-white font-bold text-sm rounded-full hover:scale-105 transition-all">
-                Shop Flash Deals <ArrowRight className="w-4 h-4" />
-              </Link>
-            </div>
-            
-            <div className="flex items-center gap-4">
-              <span className="text-xs text-gray-400 font-bold uppercase tracking-widest hidden md:block">ENDS IN</span>
-              <div className="flex gap-2 font-mono">
-                {[
-                  { val: countdown.hours, label: "HRS" },
-                  { val: countdown.minutes, label: "MIN" },
-                  { val: countdown.seconds, label: "SEC" }
-                ].map((unit, ui) => (
-                  <div key={ui} className="flex flex-col items-center">
-                    <div className="w-16 h-16 bg-black/40 rounded-2xl border border-[#ff007f]/30 flex items-center justify-center shadow-[0_0_20px_rgba(255,0,127,0.15)]">
-                      <span className="text-2xl font-black text-[#ff007f]">{String(unit.val).padStart(2, "0")}</span>
+                      <div className="bg-slate-900/60 p-3 rounded-xl border border-cyan-500/10 text-[10px] text-gray-300 leading-relaxed font-mono">
+                        <span className="text-[9px] font-black uppercase text-cyan-400 tracking-wider block mb-1">COGNITIVE RECOMMENDATION OVERVIEW:</span>
+                        {searchReport.aiVerdict}
+                      </div>
                     </div>
-                    <span className="text-[8px] text-gray-500 uppercase mt-1 tracking-widest">{unit.label}</span>
+                  )}
+                </div>
+
+                {searchReport && (
+                  <div className="pt-4 border-t border-white/5 flex items-center justify-end gap-3 mt-4">
+                    <Link
+                      href={`/product/${searchReport.product._id}`}
+                      className="px-4 py-2 border border-white/10 hover:border-white/30 text-white rounded-xl text-[10px] font-bold uppercase tracking-wider transition-colors"
+                    >
+                      Specifications Report
+                    </Link>
+                    <button
+                      onClick={() => {
+                        dispatch(addToCart({
+                          id: searchReport.product._id,
+                          name: searchReport.product.name,
+                          price: searchReport.nexusPrice,
+                          quantity: 1,
+                          image: searchReport.product.images?.[0] || ""
+                        }));
+                        alert("Added to cart.");
+                      }}
+                      className="px-4 py-2 bg-gradient-to-r from-cyan-400 to-indigo-500 hover:from-cyan-500 hover:to-indigo-600 text-black font-black rounded-xl text-[10px] font-mono uppercase tracking-wider transition-all"
+                    >
+                      Instant Procure
+                    </button>
                   </div>
-                ))}
+                )}
               </div>
-            </div>
-          </div>
-        </div>
+            </section>
 
-        {/* TOP RATED PRODUCTS */}
-        <div>
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-2">
-              <div className="w-1 h-6 rounded-full bg-gradient-to-b from-[#ff9900] to-[#ff6600]" />
-              <h2 className="text-xl font-black text-white uppercase tracking-tight">Top Rated</h2>
-              <TrendingUp className="w-5 h-5 text-[#ff9900]" />
-            </div>
-            <Link href="/shop" className="text-xs font-semibold text-[#ff9900] hover:text-white transition-colors flex items-center gap-1">
-              View All <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
+            {/* MODULE 3: AGENT BATTLE ARENA */}
+            <section id="ARENA" className="scroll-mt-28">
+              <div className="rounded-3xl border border-white/10 bg-slate-950/50 backdrop-blur-xl p-6 shadow-2xl h-full flex flex-col justify-between">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                        <MessageSquare className="w-5 h-5" />
+                      </div>
+                      <div className="text-left">
+                        <h2 className="text-sm font-black uppercase tracking-wider text-white">Agentic purchase Battle Arena</h2>
+                        <p className="text-[10px] text-gray-400">Launch real-time debates between five specialized agents</p>
+                      </div>
+                    </div>
+                  </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4">
-            {topRated.slice(0, 8).map((prod, i) => (
-              <motion.div
-                key={prod._id}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.05 }}
-              >
-                <Link
-                  href={`/product/${prod._id}`}
-                  className="group flex flex-col bg-white rounded-2xl overflow-hidden border border-gray-100 hover:border-[#ff9900]/40 hover:shadow-[0_8px_30px_rgba(255,153,0,0.15)] transition-all cursor-pointer h-full"
-                >
-                  <div className="bg-white p-4 flex items-center justify-center h-44 relative">
-                    <img
-                      src={prod.images?.[0]}
-                      alt={prod.name}
-                      className="h-32 w-full object-contain group-hover:scale-105 transition-transform duration-300 drop-shadow-md"
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={arenaQuery}
+                      onChange={(e) => setArenaQuery(e.target.value)}
+                      placeholder="Define purchase target"
+                      className="flex-1 bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-xs focus:outline-none focus:border-amber-500 text-white font-mono"
                     />
                     <button
-                      onClick={(e) => handleWishlist(e, prod._id)}
-                      className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white shadow-md flex items-center justify-center border border-gray-100 hover:border-red-300 transition-all"
+                      onClick={runAgentDebate}
+                      disabled={isDebating}
+                      className="bg-amber-500 hover:bg-amber-600 text-black px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1 cursor-pointer shrink-0"
                     >
-                      <Heart className={`w-4 h-4 ${wishlistedIds.has(prod._id) ? "fill-red-500 text-red-500" : "text-gray-400"}`} />
+                      {isDebating ? "Debating..." : "Orchestrate Arena"}
                     </button>
-                    {i === 0 && (
-                      <span className="absolute top-3 left-3 bg-gradient-to-r from-[#ff9900] to-[#ff6600] text-white text-[9px] font-black px-2 py-0.5 rounded-full">
-                        #1 BESTSELLER
-                      </span>
+                  </div>
+
+                  {/* Consensus Meter */}
+                  <div className="bg-black/40 p-3.5 rounded-2xl border border-white/5 text-left font-mono">
+                    <div className="flex justify-between items-center text-[9px] text-gray-500 uppercase mb-1.5 font-bold">
+                      <span>PURCHASE Consensus Rating</span>
+                      <span className={`${consensusScore > 65 ? "text-emerald-400 animate-pulse" : "text-amber-500"}`}>{consensusScore}% Approval</span>
+                    </div>
+                    <div className="w-full bg-white/5 h-2 rounded-full overflow-hidden border border-white/5">
+                      <motion.div
+                        className="h-full bg-gradient-to-r from-amber-500 to-emerald-400"
+                        animate={{ width: `${consensusScore}%` }}
+                        transition={{ duration: 0.8 }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Arena messages log */}
+                  <div className="space-y-3 max-h-[220px] overflow-y-auto custom-scrollbar p-1 text-left font-mono">
+                    <AnimatePresence>
+                      {arenaMessages.map((msg, idx) => (
+                        <motion.div
+                          key={idx}
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          className={`p-3 rounded-2xl border text-[10px] leading-relaxed ${msg.color}`}
+                        >
+                          <div className="font-black text-[9px] uppercase mb-1 flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                            {msg.agent}
+                          </div>
+                          <div>{msg.text}</div>
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
+                    {isDebating && (
+                      <div className="flex items-center gap-1.5 text-[9px] text-gray-500 uppercase tracking-widest pl-2">
+                        <Zap className="w-3.5 h-3.5 animate-spin" />
+                        <span>Agents formulating rebuttals...</span>
+                      </div>
+                    )}
+                    {arenaMessages.length === 0 && !isDebating && (
+                      <div className="text-[10px] text-gray-600 text-center py-8">
+                        Define purchase above and orchestrate to launch agent audit stream.
+                      </div>
                     )}
                   </div>
-                  
-                  <div className="p-3 border-t border-gray-50 flex flex-col flex-1">
-                    <div className="text-[9px] text-[#ff9900] font-black uppercase tracking-wider mb-1">{prod.category}</div>
-                    <h3 className="text-xs font-bold text-gray-900 line-clamp-2 group-hover:text-[#ff9900] transition-colors leading-snug flex-1">{prod.name}</h3>
-                    <div className="flex items-center gap-1 mt-1.5">
-                      {Array.from({ length: 5 }).map((_, si) => (
-                        <Star key={si} className={`w-2.5 h-2.5 ${si < Math.floor(prod.rating || 4.5) ? "fill-yellow-400 text-yellow-400" : "text-gray-200"}`} />
-                      ))}
-                      <span className="text-[9px] text-gray-400 ml-0.5">({prod.numReviews})</span>
-                    </div>
-                    <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-50">
-                      <div>
-                        <div className="text-sm font-black text-gray-900">${prod.price.toLocaleString()}</div>
-                        {prod.originalPrice > prod.price && (
-                          <div className="text-[9px] text-gray-400 line-through">${prod.originalPrice}</div>
-                        )}
+                </div>
+
+                {arenaMessages.length > 0 && !isDebating && (
+                  <div className="pt-4 border-t border-white/5 flex items-center justify-between text-[10px] font-mono text-gray-500 mt-4">
+                    <span>Audit complete. Consensus Converged.</span>
+                    <button
+                      onClick={() => setArenaMessages([])}
+                      className="text-red-400 hover:underline cursor-pointer"
+                    >
+                      Clear Arena
+                    </button>
+                  </div>
+                )}
+              </div>
+            </section>
+
+          </div>
+
+          {/* SIMULATION & HORIZONS ROW */}
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+            
+            {/* MODULE 4: FUTURE SELF SIMULATOR */}
+            <section id="DESTINY" className="scroll-mt-28">
+              <div className="rounded-3xl border border-white/10 bg-slate-950/50 backdrop-blur-xl p-6 shadow-2xl h-full flex flex-col justify-between">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="p-2.5 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                        <GitBranch className="w-5 h-5" />
                       </div>
+                      <div className="text-left">
+                        <h2 className="text-sm font-black uppercase tracking-wider text-white">Future Self Destiny Simulator</h2>
+                        <p className="text-[10px] text-gray-400">Slide timeline to project career growth and required purchases</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Year slider slider */}
+                  <div className="bg-black/30 p-4 rounded-2xl border border-white/5 text-left font-mono">
+                    <div className="flex justify-between items-center text-[10px] text-gray-400 mb-2">
+                      <span>Timeline projection shift</span>
+                      <span className="text-purple-400 font-bold">Year: {simulatorData.year} (+{timelineValue} Years)</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="25"
+                      value={timelineValue}
+                      onChange={(e) => handleTimelineChange(parseInt(e.target.value))}
+                      className="w-full h-1.5 bg-white/5 rounded-lg appearance-none cursor-pointer accent-purple-500"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left font-mono">
+                    {/* Projection Details */}
+                    <div className="space-y-3">
+                      <div className="bg-slate-900/60 p-3 rounded-2xl border border-white/5">
+                        <span className="text-[8px] text-gray-500 uppercase tracking-widest block mb-0.5">Projected Career Title</span>
+                        <span className="text-xs font-bold text-purple-400">{simulatorData.career}</span>
+                      </div>
+
+                      <div className="bg-slate-900/60 p-3 rounded-2xl border border-white/5">
+                        <span className="text-[8px] text-gray-500 uppercase tracking-widest block mb-1">Required Skill Nodes</span>
+                        <div className="flex flex-wrap gap-1.5">
+                          {simulatorData.skills.map((sk: string, sIdx: number) => (
+                            <span key={sIdx} className="text-[8px] bg-purple-500/10 text-purple-400 border border-purple-500/20 px-2 py-0.5 rounded-full font-bold">
+                              {sk}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Chart mapping timeline */}
+                    <div className="h-[120px] bg-black/30 p-3 rounded-2xl border border-white/5">
+                      <span className="text-[8px] text-gray-500 uppercase tracking-widest block mb-1">Projected net worth trajectory ($k)</span>
+                      {mounted && (
+                        <ResponsiveContainer width="100%" height="85%">
+                          <LineChart data={simulatorData.graph}>
+                            <XAxis dataKey="name" stroke="#6b7280" fontSize={8} />
+                            <Tooltip contentStyle={{ background: "#0f172a", border: "1px solid rgba(255,255,255,0.1)", fontSize: 9 }} />
+                            <Line type="monotone" dataKey="worth" stroke="#a855f7" strokeWidth={2} dot={{ fill: "#a855f7" }} />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Procurements list */}
+                  <div className="text-left font-mono">
+                    <span className="text-[8px] text-gray-500 uppercase tracking-widest block mb-2">Required physical resource acquisitions:</span>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {simulatorData.procurements.map((proc: any, pIdx: number) => (
+                        <div key={pIdx} className="p-3 bg-slate-900/50 rounded-2xl border border-purple-500/10 flex justify-between items-center group">
+                          <div>
+                            <span className="text-[10px] font-bold text-white block group-hover:text-purple-400 transition-colors">{proc.name}</span>
+                            <span className="text-[8px] text-gray-500">{proc.desc}</span>
+                          </div>
+                          <button
+                            onClick={() => handleAddProcurement(proc)}
+                            className="bg-purple-500/10 border border-purple-500/30 text-purple-400 hover:bg-purple-500 hover:text-black p-2 rounded-xl text-[10px] font-black transition-all cursor-pointer flex items-center justify-center gap-1 font-mono"
+                          >
+                            {proc.price} <ShoppingBag className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-white/5 text-[9px] font-mono text-gray-500 text-left mt-4">
+                  Adjust slider to dynamically vector life projections.
+                </div>
+              </div>
+            </section>
+
+            {/* MODULE 5: DIGITAL TWIN LAB */}
+            <section id="TWIN" className="scroll-mt-28">
+              <div className="rounded-3xl border border-white/10 bg-slate-950/50 backdrop-blur-xl p-6 shadow-2xl h-full flex flex-col justify-between">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                        <UserCheck className="w-5 h-5" />
+                      </div>
+                      <div className="text-left">
+                        <h2 className="text-sm font-black uppercase tracking-wider text-white">Personal Digital Twin Lab</h2>
+                        <p className="text-[10px] text-gray-400">Monitor and fine-tune your autonomous procurement agent</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Twin Settings Configuration sliders */}
+                  <div className="bg-black/30 p-4 rounded-2xl border border-white/5 space-y-3 font-mono text-left">
+                    <h3 className="text-[9px] font-black uppercase tracking-widest text-emerald-400 mb-2 border-b border-white/5 pb-1">Cognitive Bias Parameters</h3>
+                    
+                    {[
+                      { key: "riskAppetite", label: "Speculative Risk appetite", labelVal: `${twinConfig.riskAppetite}%` },
+                      { key: "ethicalBias", label: "Ethical / carbon audit bias", labelVal: `${twinConfig.ethicalBias}%` },
+                      { key: "budgetBuffer", label: "Autonomous Liquidity buffer", labelVal: `${twinConfig.budgetBuffer}%` }
+                    ].map(slider => (
+                      <div key={slider.key} className="space-y-1">
+                        <div className="flex justify-between text-[9px] text-gray-400">
+                          <span>{slider.label}</span>
+                          <span className="text-emerald-400 font-bold">{slider.labelVal}</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="0"
+                          max="100"
+                          value={(twinConfig as any)[slider.key]}
+                          onChange={(e) => setTwinConfig(prev => ({ ...prev, [slider.key]: parseInt(e.target.value) }))}
+                          className="w-full h-1 bg-white/5 rounded-lg appearance-none cursor-pointer accent-emerald-500"
+                        />
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Twin Activity list */}
+                  <div className="text-left font-mono">
+                    <div className="flex items-center gap-1.5 mb-2">
+                      <Activity className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
+                      <span className="text-[8px] text-gray-500 uppercase tracking-widest">Twin background action telemetry:</span>
+                    </div>
+                    <div className="space-y-1.5 h-[120px] overflow-y-auto custom-scrollbar bg-slate-900/40 p-3 rounded-2xl border border-white/5">
+                      {twinLogs.map((log, lIdx) => (
+                        <div key={lIdx} className="text-[9px] flex items-center gap-2 text-gray-300">
+                          <span className="w-1 h-1 rounded-full bg-emerald-400 shrink-0" />
+                          <span className="break-all">{log}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-white/5 flex items-center justify-between text-[9px] font-mono text-gray-500 mt-4">
+                  <span>Twin Synchronized. Biometric synced.</span>
+                  <button
+                    onClick={() => {
+                      setTwinLogs(prev => ["Dispatched neural search optimizer.", ...prev]);
+                      alert("Twin recalibrated.");
+                    }}
+                    className="text-emerald-400 hover:underline cursor-pointer"
+                  >
+                    Force Recalibration
+                  </button>
+                </div>
+              </div>
+            </section>
+
+          </div>
+
+          {/* SONAR RADAR & SIMULATOR GRID */}
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+            
+            {/* MODULE 6: OPPORTUNITY RADAR */}
+            <section id="RADAR" className="scroll-mt-28">
+              <div className="rounded-3xl border border-white/10 bg-slate-950/50 backdrop-blur-xl p-6 shadow-2xl h-full flex flex-col justify-between">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="p-2.5 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                        <Compass className="w-5 h-5 animate-pulse" />
+                      </div>
+                      <div className="text-left">
+                        <h2 className="text-sm font-black uppercase tracking-wider text-white">Live Opportunity Radar</h2>
+                        <p className="text-[10px] text-gray-400">Click sonar ping locations to inspect market arbitrage anomalies</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+                    {/* SVG Sonar Canvas */}
+                    <div className="relative aspect-square max-w-[200px] mx-auto w-full bg-black/60 rounded-full border border-cyan-500/10 flex items-center justify-center overflow-hidden">
+                      {/* Grid concentric rings */}
+                      <div className="absolute w-[80%] h-[80%] rounded-full border border-cyan-500/5" />
+                      <div className="absolute w-[60%] h-[60%] rounded-full border border-cyan-500/5" />
+                      <div className="absolute w-[40%] h-[40%] rounded-full border border-cyan-500/5" />
+                      <div className="absolute w-[20%] h-[20%] rounded-full border border-cyan-500/5" />
+                      {/* X/Y Crosshairs */}
+                      <div className="absolute w-full h-[1px] bg-cyan-500/5" />
+                      <div className="absolute h-full w-[1px] bg-cyan-500/5" />
+
+                      {/* Rotating sweeping line */}
+                      <div
+                        className="absolute top-1/2 left-1/2 w-[50%] h-[50%] origin-top-left bg-gradient-to-tr from-cyan-500/0 to-cyan-500/30"
+                        style={{ transform: `rotate(${radarSweepAngle}deg) translate(-100%, -100%)` }}
+                      />
+
+                      {/* Opportunity Radar Hotspots */}
+                      {[
+                        { name: "14% Discount on VR headset", type: "Product Arbitrage", desc: "Active arbitrage found. Buy via Nexus Store, resell on Myntra yields 18% margin.", action: "Deploy Twin", x: 40, y: 35, color: "bg-cyan-400" },
+                        { name: "Quantum Arch course", type: "Career Opportunity", desc: "Synaptic Developer demand up 30%. Acquiring this unlocks timeline path 8 months early.", action: "Pre-Register", x: 120, y: 60, color: "bg-purple-500" },
+                        { name: "Amazon liquid memory sale", type: "Arbitrage Discount", desc: "Wholesale seller selling computing blocks at $85. standard value is $120.", action: "Acquire block", x: 75, y: 140, color: "bg-amber-400" }
+                      ].map((dot, dIdx) => (
+                        <button
+                          key={dIdx}
+                          onClick={() => handleRadarClick(dot.x, dot.y, dot.name, dot.type, dot.desc, dot.action)}
+                          className={`absolute w-3 h-3 rounded-full ${dot.color} cursor-pointer border border-white hover:scale-150 transition-transform shadow-[0_0_10px_rgba(255,255,255,0.8)]`}
+                          style={{ left: `${dot.x}px`, top: `${dot.y}px` }}
+                        />
+                      ))}
+                    </div>
+
+                    {/* Opportunity description box */}
+                    {selectedOpportunity && (
+                      <div className="bg-slate-900/60 p-4 rounded-2xl border border-white/5 text-left font-mono space-y-3">
+                        <div className="border-b border-white/5 pb-2">
+                          <span className="text-[8px] bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 px-2 py-0.5 rounded-full font-bold uppercase block w-max mb-1">
+                            {selectedOpportunity.type}
+                          </span>
+                          <h3 className="text-[11px] font-bold text-white">{selectedOpportunity.title}</h3>
+                        </div>
+                        <p className="text-[9px] text-gray-400 leading-relaxed">{selectedOpportunity.desc}</p>
+                        <button
+                          onClick={() => alert(`Initiating workflow: ${selectedOpportunity.action}`)}
+                          className="w-full bg-cyan-500 hover:bg-cyan-600 text-black font-black uppercase text-[10px] py-1.5 rounded-lg transition-all font-mono tracking-widest cursor-pointer"
+                        >
+                          {selectedOpportunity.action}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-white/5 text-[9px] font-mono text-gray-500 text-left mt-4 flex items-center justify-between">
+                  <span>Concentric Sweep Radius: 200 light sec</span>
+                  <span>3 Active anomalies detected</span>
+                </div>
+              </div>
+            </section>
+
+            {/* MODULE 7: REALITY SANDBOX */}
+            <section id="SANDBOX" className="scroll-mt-28">
+              <div className="rounded-3xl border border-white/10 bg-slate-950/50 backdrop-blur-xl p-6 shadow-2xl h-full flex flex-col justify-between">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                        <Layers className="w-5 h-5" />
+                      </div>
+                      <div className="text-left">
+                        <h2 className="text-sm font-black uppercase tracking-wider text-white">Temporal Reality Sandbox</h2>
+                        <p className="text-[10px] text-gray-400">Simulate structural impacts of purchase decisions on your profile</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left font-mono">
+                    <div className="space-y-3">
+                      <div>
+                        <span className="text-[8px] text-gray-500 uppercase tracking-widest block mb-1">Select simulated target</span>
+                        <select
+                          value={sandboxProduct}
+                          onChange={(e) => setSandboxProduct(e.target.value)}
+                          className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500 font-mono"
+                        >
+                          <option value="Nexus AeroBook Pro">Nexus AeroBook Pro ($2,499)</option>
+                          <option value="Quest VR Node">Nexus Quest VR Node ($1,199)</option>
+                          <option value="Nexus Companion Hub">Nexus Companion Hub ($699)</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <span className="text-[8px] text-gray-500 uppercase tracking-widest block mb-1">Amortized life impact period</span>
+                        <div className="flex justify-between text-[9px] text-gray-400 mb-1">
+                          <span>Timeline window:</span>
+                          <span className="text-indigo-400 font-bold">{sandboxInvestment} months</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="1"
+                          max="24"
+                          value={sandboxInvestment}
+                          onChange={(e) => setSandboxInvestment(parseInt(e.target.value))}
+                          className="w-full h-1 bg-white/5 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                        />
+                      </div>
+
                       <button
-                        onClick={(e) => handleAddToCart(e, prod)}
-                        className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider transition-all ${
-                          addedToCart.has(prod._id)
-                            ? "bg-green-500 text-white"
-                            : "bg-[#ff9900] hover:bg-[#f3a847] text-black border border-[#a88734]"
-                        }`}
+                        onClick={runSandboxSimulation}
+                        className="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-black py-2 rounded-xl text-xs uppercase tracking-widest transition-all cursor-pointer font-mono"
                       >
-                        {addedToCart.has(prod._id) ? "✓" : "+ Cart"}
+                        Run Sandbox Impact
+                      </button>
+                    </div>
+
+                    {/* Recharts chart mapping sandbox impact */}
+                    <div className="h-[150px] bg-black/40 p-2 rounded-2xl border border-white/5">
+                      <span className="text-[8px] text-gray-500 uppercase tracking-widest block mb-1">Simulated profile metrics impact</span>
+                      {mounted && (
+                        <ResponsiveContainer width="100%" height="90%">
+                          <BarChart data={sandboxMetrics} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
+                            <XAxis dataKey="name" tick={{ fill: "#6b7280", fontSize: 8 }} />
+                            <Tooltip contentStyle={{ background: "#0f172a", border: "1px solid rgba(255,255,255,0.1)", fontSize: 9 }} />
+                            <Bar dataKey="before" fill="#475569" radius={[4, 4, 0, 0]} />
+                            <Bar dataKey="after" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-white/5 flex justify-between text-[9px] font-mono text-gray-500 text-left mt-4">
+                  <span>Gray: Pre-purchase metric | Indigo: Post-purchase projection</span>
+                </div>
+              </div>
+            </section>
+
+          </div>
+
+          {/* TICKERS & AUTONOMOUS ENGINE */}
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+            
+            {/* MODULE 8: GLOBAL MARKET RADAR */}
+            <section id="GLOBAL" className="scroll-mt-28">
+              <div className="rounded-3xl border border-white/10 bg-slate-950/50 backdrop-blur-xl p-6 shadow-2xl h-full flex flex-col justify-between">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="p-2.5 rounded-xl bg-sky-500/10 text-sky-400 border border-sky-500/20">
+                        <Globe2 className="w-5 h-5 animate-spin" style={{ animationDuration: "12s" }} />
+                      </div>
+                      <div className="text-left">
+                        <h2 className="text-sm font-black uppercase tracking-wider text-white">Global Market Volatility Radar</h2>
+                        <p className="text-[10px] text-gray-400">Real-time trade flow indexes and market ticker telemetry</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Market Heatmap grid simulator */}
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 font-mono">
+                    {marketTrends.map((trend, tIdx) => (
+                      <div key={tIdx} className="p-3 bg-black/40 rounded-2xl border border-white/5 flex flex-col items-center justify-center">
+                        <span className="text-[10px] text-white font-bold">{trend.code}</span>
+                        <span className={`text-[9px] mt-1 font-bold ${trend.status === "up" ? "text-emerald-400" : "text-red-400"}`}>
+                          {trend.val}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Volatility Trend chart */}
+                  <div className="h-[120px] bg-black/30 p-3.5 rounded-2xl border border-white/5 text-left font-mono">
+                    <span className="text-[8px] text-gray-500 uppercase tracking-widest block mb-1">Global Logistics Congestion Index (Vol)</span>
+                    {mounted && (
+                      <ResponsiveContainer width="100%" height="90%">
+                        <LineChart data={[
+                          { name: "09:00", index: 12 },
+                          { name: "10:00", index: 15 },
+                          { name: "11:00", index: 14 },
+                          { name: "12:00", index: 21 },
+                          { name: "13:00", index: 18 },
+                          { name: "14:00", index: 28 },
+                          { name: "15:00", index: 24 }
+                        ]}>
+                          <XAxis dataKey="name" stroke="#6b7280" fontSize={8} />
+                          <Tooltip contentStyle={{ background: "#0f172a", border: "1px solid rgba(255,255,255,0.1)", fontSize: 9 }} />
+                          <Line type="monotone" dataKey="index" stroke="#0ea5e9" strokeWidth={2} dot={false} />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    )}
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-white/5 text-[9px] font-mono text-gray-500 text-left mt-4">
+                  Aggregating logistics metrics across Chennai, Rotterdam, Shenzhen ports.
+                </div>
+              </div>
+            </section>
+
+            {/* MODULE 9: AUTONOMOUS SHOPPING ENGINE */}
+            <section id="AUTONOMOUS" className="scroll-mt-28">
+              <div className="rounded-3xl border border-white/10 bg-slate-950/50 backdrop-blur-xl p-6 shadow-2xl h-full flex flex-col justify-between">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="p-2.5 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                        <Cpu className="w-5 h-5 animate-pulse" />
+                      </div>
+                      <div className="text-left">
+                        <h2 className="text-sm font-black uppercase tracking-wider text-white">Autonomous Shopping Engine</h2>
+                        <p className="text-[10px] text-gray-400">Configure twin buying limits for automatic deal locking</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3 text-left font-mono">
+                    <div>
+                      <span className="text-[8px] text-gray-500 uppercase tracking-widest block mb-1">Target product SKU</span>
+                      <input
+                        type="text"
+                        value={autoBuyProduct}
+                        onChange={(e) => setAutoBuyProduct(e.target.value)}
+                        placeholder="e.g. Nexus Companion Hub"
+                        className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-rose-500 font-mono"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <span className="text-[8px] text-gray-500 uppercase tracking-widest block mb-1">Price limit limit ($)</span>
+                        <input
+                          type="number"
+                          value={autoBuyTarget}
+                          onChange={(e) => setAutoBuyTarget(parseInt(e.target.value) || 0)}
+                          className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-rose-500 font-mono"
+                        />
+                      </div>
+                      <div>
+                        <span className="text-[8px] text-gray-500 uppercase tracking-widest block mb-1">Autonomous Status</span>
+                        <span className="w-full bg-slate-900 border border-white/5 rounded-xl px-3 py-2 text-xs block font-bold text-rose-400 text-center animate-pulse">
+                          {autoBuyStatus}
+                        </span>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={dispatchAutoBuy}
+                      className="w-full bg-rose-500 hover:bg-rose-600 text-white font-black py-2 rounded-xl text-xs uppercase tracking-widest transition-all cursor-pointer font-mono"
+                    >
+                      Authorize Auto-Procurement limit
+                    </button>
+                  </div>
+
+                  <div className="bg-slate-900/60 p-3 rounded-2xl border border-white/5 text-[9px] text-gray-400 leading-relaxed font-mono text-left">
+                    <span className="text-[8px] text-rose-400 uppercase font-black tracking-wider block mb-1">DECISION LOGIC MATRIX:</span>
+                    If price drops below target limit, matching twin triggers escrow payment. Else, maintains monitor sweeps. Alternate target recommendation: <span className="text-rose-400 underline cursor-pointer">Nexus Phone X mini</span> ($499).
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-white/5 text-[9px] font-mono text-gray-500 text-left mt-4 flex items-center justify-between">
+                  <span>Direct API Escrow status: INACTIVE</span>
+                </div>
+              </div>
+            </section>
+
+          </div>
+
+          {/* MODULE 10: NEXUS INTELLIGENCE ALERTS FEED */}
+          <section id="FEED" className="scroll-mt-28">
+            <div className="rounded-3xl border border-white/10 bg-slate-950/50 backdrop-blur-xl p-6 shadow-2xl">
+              <div className="flex items-center gap-2 mb-6">
+                <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                  <AlertCircle className="w-5 h-5 animate-bounce" />
+                </div>
+                <div className="text-left">
+                  <h2 className="text-sm font-black uppercase tracking-wider text-white">Nexus Intelligence alerts feed</h2>
+                  <p className="text-[10px] text-gray-400">Continuous AI-generated market opportunities and alerts</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 font-mono text-left">
+                {alertsFeed.map((alertItem) => (
+                  <div key={alertItem.id} className="p-4 rounded-2xl bg-slate-900/50 border border-white/5 space-y-2 flex flex-col justify-between hover:border-cyan-500/20 transition-colors">
+                    <div>
+                      <div className="flex items-center gap-1.5 text-[8px] font-black uppercase tracking-wider text-cyan-400 mb-1">
+                        <Sparkles className="w-3.5 h-3.5" />
+                        AI Market Signal
+                      </div>
+                      <h4 className="text-[11px] font-bold text-white mb-1.5 leading-tight">{alertItem.title}</h4>
+                      <p className="text-[9px] text-gray-400 leading-relaxed">{alertItem.msg}</p>
+                    </div>
+                    <div className="pt-3 border-t border-white/5 mt-3 flex justify-end">
+                      <button
+                        onClick={() => alert(`Optimizing: ${alertItem.title}`)}
+                        className="text-[9px] font-bold uppercase tracking-wider text-cyan-400 hover:text-cyan-300 transition-colors cursor-pointer"
+                      >
+                        Authorize Optimization &rarr;
                       </button>
                     </div>
                   </div>
-                </Link>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-
-        {/* AI RECOMMENDATION BANNER */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#000d26] via-[#001a3d] to-[#000d26] border border-[#00f0ff]/20 p-6 md:p-10">
-          <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            <div className="absolute top-[-80px] right-[-80px] w-[350px] h-[350px] rounded-full blur-[100px] opacity-20 bg-[#00f0ff]" />
-          </div>
-          <div className="relative z-10 flex flex-col md:flex-row items-center gap-8">
-            <div className="flex-shrink-0">
-              <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-[#00f0ff] to-[#0080ff] flex items-center justify-center shadow-[0_0_40px_rgba(0,240,255,0.4)]">
-                <Sparkles className="w-10 h-10 text-black" />
-              </div>
-            </div>
-            <div className="flex-1 text-center md:text-left">
-              <div className="text-[10px] font-black text-[#00f0ff] uppercase tracking-widest mb-2">AI-Powered Recommendations</div>
-              <h3 className="text-2xl font-black text-white mb-2">Your Personalized Workspace Profile</h3>
-              <p className="text-sm text-gray-400 leading-relaxed max-w-lg">
-                Our Quantum AI analyzes your job role, browsing patterns, and hardware requirements to curate a perfectly matched workspace. Products tailored just for you.
-              </p>
-            </div>
-            <div className="flex-shrink-0">
-              <Link
-                href={isAuthenticated ? "/dashboard" : "/login"}
-                className="px-6 py-3 rounded-full bg-gradient-to-r from-[#00f0ff] to-[#0080ff] text-black font-black text-sm hover:scale-105 transition-all flex items-center gap-2"
-              >
-                <Sparkles className="w-4 h-4" />
-                {isAuthenticated ? "View My Picks" : "Get Started"}
-              </Link>
-            </div>
-          </div>
-        </div>
-
-        {/* RECOMMENDED FOR YOU */}
-        {recommended.length > 0 && (
-          <div>
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-2">
-                <div className="w-1 h-6 rounded-full bg-gradient-to-b from-[#00f0ff] to-[#0080ff]" />
-                <h2 className="text-xl font-black text-white uppercase tracking-tight">Recommended For You</h2>
-                <span className="text-[10px] font-black bg-[#00f0ff]/20 text-[#00f0ff] border border-[#00f0ff]/30 px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-                  AI Selected
-                </span>
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {recommended.slice(0, 4).map((prod, i) => (
-                <motion.div
-                  key={prod._id}
-                  initial={{ opacity: 0, y: 15 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.05 }}
-                >
-                  <Link
-                    href={`/product/${prod._id}`}
-                    className="group flex flex-col bg-white rounded-2xl overflow-hidden border border-gray-100 hover:border-[#00f0ff]/40 hover:shadow-xl transition-all cursor-pointer h-full"
-                  >
-                    <div className="bg-white p-4 flex items-center justify-center h-44 relative">
-                      <img
-                        src={prod.images?.[0]}
-                        alt={prod.name}
-                        className="h-32 w-full object-contain group-hover:scale-105 transition-transform duration-300 drop-shadow-md"
-                      />
-                      <button
-                        onClick={(e) => handleWishlist(e, prod._id)}
-                        className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white shadow-md flex items-center justify-center border border-gray-100 hover:border-red-300 transition-all z-10"
-                      >
-                        <Heart className={`w-4 h-4 ${wishlistedIds.has(prod._id) ? "fill-red-500 text-red-500" : "text-gray-400"}`} />
-                      </button>
-                    </div>
-                    
-                    <div className="p-3 bg-white border-t border-gray-50 flex flex-col flex-1">
-                      <div className="text-[9px] text-[#0080ff] font-black uppercase tracking-wider mb-1">{prod.category}</div>
-                      <h3 className="text-xs font-bold text-gray-900 line-clamp-2 group-hover:text-[#0080ff] transition-colors leading-snug flex-1">{prod.name}</h3>
-                      <div className="flex items-center gap-1 mt-1.5">
-                        {Array.from({ length: 5 }).map((_, si) => (
-                          <Star key={si} className={`w-2.5 h-2.5 ${si < Math.floor(prod.rating || 4.5) ? "fill-yellow-400 text-yellow-400" : "text-gray-200"}`} />
-                        ))}
-                        <span className="text-[9px] text-gray-400 ml-0.5">({prod.numReviews})</span>
-                      </div>
-                      <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-50">
-                        <span className="text-sm font-black text-gray-900">${prod.price.toLocaleString()}</span>
-                        <button
-                          onClick={(e) => handleAddToCart(e, prod)}
-                          className={`px-3 py-1 bg-[#ff9900] hover:bg-[#f3a847] text-black text-[10px] font-black uppercase rounded-full border border-[#a88734] transition-all`}
-                        >
-                          + Cart
-                        </button>
-                      </div>
-                    </div>
-                  </Link>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* FLASH DEALS GRID */}
-        {flashDeals.length > 0 && (
-          <div>
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-2">
-                <div className="w-1 h-6 rounded-full bg-gradient-to-b from-[#ef4444] to-[#b91c1c]" />
-                <h2 className="text-xl font-black text-white uppercase tracking-tight">Flash Deals</h2>
-                <span className="text-[10px] font-black bg-[#ef4444]/20 text-[#ef4444] border border-[#ef4444]/30 px-2 py-0.5 rounded-full uppercase tracking-wider animate-pulse">
-                  Limited Time
-                </span>
-              </div>
-              <Link href="/shop" className="text-xs font-semibold text-[#ef4444] hover:text-white transition-colors flex items-center gap-1">
-                All Deals <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-              {flashDeals.map((prod, i) => {
-                const discount = Math.round(((prod.originalPrice - prod.price) / prod.originalPrice) * 100);
-                return (
-                  <motion.div
-                    key={prod._id}
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    whileInView={{ opacity: 1, scale: 1 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: i * 0.05 }}
-                  >
-                    <Link
-                      href={`/product/${prod._id}`}
-                      className="group relative flex flex-col bg-white rounded-2xl overflow-hidden border border-gray-100 hover:border-[#ef4444]/40 hover:shadow-[0_8px_30px_rgba(239,68,68,0.15)] transition-all cursor-pointer"
-                    >
-                      <div className="absolute top-3 left-3 z-10 bg-[#b12704] text-white text-[10px] font-black px-2 py-1 rounded-lg">
-                        -{discount}%
-                      </div>
-                      <div className="bg-white p-4 flex items-center justify-center h-40">
-                        <img
-                          src={prod.images?.[0]}
-                          alt={prod.name}
-                          className="h-28 w-full object-contain group-hover:scale-105 transition-transform duration-300"
-                        />
-                      </div>
-                      <div className="p-3 border-t border-gray-50">
-                        <div className="text-[9px] text-gray-400 font-bold uppercase mb-1">{prod.category}</div>
-                        <h3 className="text-[11px] font-bold text-gray-900 line-clamp-2 group-hover:text-[#ef4444] transition-colors leading-snug">{prod.name}</h3>
-                        <div className="mt-2 flex items-center gap-2">
-                          <span className="text-sm font-black text-[#b12704]">${prod.price.toLocaleString()}</span>
-                          <span className="text-[9px] text-gray-400 line-through">${prod.originalPrice}</span>
-                        </div>
-                        {/* Urgency bar */}
-                        <div className="mt-2 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-gradient-to-r from-[#ef4444] to-[#f59e0b] rounded-full"
-                            style={{ width: `${35 + ((i * 17) % 45)}%` }}
-                          />
-                        </div>
-                        <div className="text-[8px] text-gray-400 mt-1 font-bold">{prod.stock} left in stock</div>
-                      </div>
-                    </Link>
-                  </motion.div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* STATS STRIP */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[
-            { icon: Users, stat: "2.4M+", label: "Active Customers", color: "#00f0ff" },
-            { icon: Package, stat: "50K+", label: "Products Listed", color: "#10b981" },
-            { icon: Award, stat: "4.9★", label: "Average Rating", color: "#f59e0b" },
-            { icon: Globe, stat: "180+", label: "Countries Served", color: "#a855f7" }
-          ].map((item, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.1 }}
-              className="relative overflow-hidden rounded-2xl bg-[#111827] border border-white/5 p-5 text-center group hover:border-white/15 transition-all"
-            >
-              <div
-                className="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity rounded-2xl"
-                style={{ background: `radial-gradient(circle at center, ${item.color}, transparent)` }}
-              />
-              <item.icon className="w-6 h-6 mx-auto mb-2" style={{ color: item.color }} />
-              <div className="text-2xl font-black text-white">{item.stat}</div>
-              <div className="text-[10px] text-gray-500 uppercase tracking-wider mt-1">{item.label}</div>
-            </motion.div>
-          ))}
-        </div>
-
-        {/* NEWSLETTER */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#0d1117] via-[#161b22] to-[#0d1117] border border-white/10 p-8 md:p-12 text-center">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,153,0,0.05),transparent_60%)] pointer-events-none" />
-          <div className="relative z-10 space-y-4 max-w-2xl mx-auto">
-            <Mail className="w-10 h-10 text-[#ff9900] mx-auto" />
-            <h3 className="text-2xl font-black text-white uppercase tracking-tight">Join the Nexus Matrix</h3>
-            <p className="text-sm text-gray-400 leading-relaxed">
-              Get exclusive access to early product drops, quantum hardware upgrades, and double-points events. Zero spam, all signal.
-            </p>
-            {newsletterSubscribed ? (
-              <div className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#10b981]/20 border border-[#10b981]/30 text-[#10b981] text-sm font-bold">
-                <Check className="w-4 h-4" /> Subscribed! Check your inbox.
-              </div>
-            ) : (
-              <form onSubmit={handleNewsletterSubmit} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
-                <input
-                  type="email"
-                  required
-                  value={newsletterEmail}
-                  onChange={(e) => setNewsletterEmail(e.target.value)}
-                  placeholder="operator@nexus.com"
-                  className="flex-1 px-4 py-3 bg-black/40 border border-white/10 rounded-full text-sm text-white placeholder:text-gray-600 focus:outline-none focus:border-[#ff9900] transition-colors"
-                />
-                <button
-                  type="submit"
-                  className="px-6 py-3 bg-gradient-to-r from-[#ff9900] to-[#ff6600] text-black font-black text-sm rounded-full hover:scale-105 transition-all cursor-pointer"
-                >
-                  Subscribe
-                </button>
-              </form>
-            )}
-          </div>
-        </div>
-
-      </section>
-
-      {/* FOOTER */}
-      <footer className="bg-[#0d1117] border-t border-white/5 text-white">
-        <button
-          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-          className="w-full py-4 bg-[#161b22] hover:bg-[#21262d] text-center text-xs font-bold text-gray-400 hover:text-white transition-colors cursor-pointer border-b border-white/5"
-        >
-          ↑ Back to Top
-        </button>
-
-        <div className="max-w-[1480px] mx-auto px-8 py-12 grid grid-cols-2 md:grid-cols-4 gap-8 text-left border-b border-white/5">
-          {[
-            {
-              title: "Company",
-              links: [
-                { label: "About Nexus", href: "/" },
-                { label: "Careers", href: "/" },
-                { label: "Press Room", href: "/" },
-                { label: "Sustainability", href: "/" }
-              ]
-            },
-            {
-              title: "Sell on Nexus",
-              links: [
-                { label: "Seller Portal", href: "/login" },
-                { label: "Advertise Products", href: "/" },
-                { label: "Partner Network", href: "/" },
-                { label: "Affiliate Program", href: "/" }
-              ]
-            },
-            {
-              title: "Nexus Pay",
-              links: [
-                { label: "Nexus Wallet", href: "/dashboard" },
-                { label: "Quantum Points", href: "/dashboard" },
-                { label: "Pay Later", href: "/" },
-                { label: "Gift Cards", href: "/" }
-              ]
-            },
-            {
-              title: "Customer Help",
-              links: [
-                { label: "Your Account", href: "/dashboard" },
-                { label: "Track Orders", href: "/orders" },
-                { label: "Support Center", href: "/dashboard" },
-                { label: "Returns Policy", href: "/" }
-              ]
-            }
-          ].map((col, ci) => (
-            <div key={ci} className="space-y-3">
-              <h4 className="text-xs font-black text-white uppercase tracking-wider">{col.title}</h4>
-              <ul className="space-y-2">
-                {col.links.map((link, li) => (
-                  <li key={li}>
-                    <Link href={link.href} className="text-[11px] text-gray-500 hover:text-white transition-colors">
-                      {link.label}
-                    </Link>
-                  </li>
                 ))}
-              </ul>
+              </div>
             </div>
-          ))}
-        </div>
+          </section>
 
-        <div className="py-6 text-center space-y-2">
-          <div className="flex items-center justify-center gap-2 text-[11px] text-gray-600">
-            <ShieldCheck className="w-4 h-4 text-[#ff9900]" />
-            <span className="font-mono">NEXUS COMMERCE X © 2050 — ALL SYSTEMS ACTIVE</span>
-          </div>
-          <div className="flex justify-center gap-6 text-[10px] text-gray-600">
-            <Link href="/" className="hover:text-white transition-colors">Terms of Use</Link>
-            <Link href="/" className="hover:text-white transition-colors">Privacy Policy</Link>
-            <Link href="/" className="hover:text-white transition-colors">Cookie Settings</Link>
-          </div>
         </div>
-      </footer>
-
+      </div>
     </main>
   );
 }
