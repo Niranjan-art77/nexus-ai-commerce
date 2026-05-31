@@ -1,0 +1,42 @@
+[
+  {
+    "_id": "0nqi23q6z",
+    "createdAt": "2026-05-20T13:01:03.241Z",
+    "updatedAt": "2026-05-20T13:01:03.241Z",
+    "user": "yv00u398e",
+    "items": [
+      {
+        "product": "avpkdl3ax",
+        "name": "Quantum Rig V9",
+        "quantity": 1,
+        "price": 4299
+      }
+    ],
+    "totalAmount": 4299,
+    "status": "pending",
+    "shippingAddress": "Sector 4, Neon Grid",
+    "paymentStatus": "completed",
+    "deliveryStages": [
+      {
+        "stage": "Order Placed",
+        "timestamp": "2026-05-20T13:01:03.240Z",
+        "completed": true
+      },
+      {
+        "stage": "Processing",
+        "timestamp": "2026-05-20T13:01:03.240Z",
+        "completed": false
+      },
+      {
+        "stage": "Shipped",
+        "timestamp": "2026-05-20T13:01:03.240Z",
+        "completed": false
+      },
+      {
+        "stage": "Delivered",
+        "timestamp": "2026-05-20T13:01:03.240Z",
+        "completed": false
+      }
+    ]
+  }
+]

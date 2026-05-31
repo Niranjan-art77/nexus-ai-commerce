@@ -1,0 +1,244 @@
+@import "tailwindcss";
+
+:root {
+  /* Dark Theme variables (Amazon 2050 Futuristic) */
+  --background: 224 45% 7%; /* Deep space blue-black #0b0f19 */
+  --foreground: 210 20% 98%;
+  
+  --primary: 38 100% 50%; /* Amazon Amber Glow #ff9900 */
+  --primary-hover: 38 100% 60%;
+  --secondary: 220 30% 12%; /* Sleek dark glass */
+  --accent: 200 100% 50%; /* Futuristic Cyan Accent */
+  --success: 142 70% 45%; 
+  --danger: 0 84% 60%; 
+  --warning: 38 100% 50%; 
+  
+  --surface: 224 45% 10%; /* Semi-transparent panel */
+  --surface-light: 224 45% 15%;
+  --border: 224 30% 20%;
+  --card: 224 45% 9%;
+  
+  --shadow-color: 0 0% 0%;
+}
+
+/* Glassmorphism utility classes */
+.glass-effect {
+  background: rgba(11, 15, 25, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.text-glow-primary {
+  text-shadow: 0 0 10px rgba(255, 153, 0, 0.6), 0 0 20px rgba(255, 153, 0, 0.4);
+}
+
+.text-glow-cyan {
+  text-shadow: 0 0 10px rgba(0, 240, 255, 0.6), 0 0 20px rgba(0, 240, 255, 0.4);
+}
+
+.box-glow-primary {
+  box-shadow: 0 0 15px rgba(255, 153, 0, 0.3), inset 0 0 10px rgba(255, 153, 0, 0.1);
+}
+
+@theme inline {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-hover: hsl(var(--primary-hover));
+  --color-secondary: hsl(var(--secondary));
+  --color-accent: hsl(var(--accent));
+  
+  --color-surface: hsl(var(--surface));
+  --color-surface-light: hsl(var(--surface-light));
+  --color-border: hsl(var(--border));
+  --color-card: hsl(var(--card));
+
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Outfit', monospace;
+}
+
+body {
+  background-color: var(--color-background);
+  background-image: radial-gradient(circle at 50% 0%, rgba(255, 153, 0, 0.05) 0%, transparent 60%),
+                    radial-gradient(circle at 100% 100%, rgba(0, 240, 255, 0.03) 0%, transparent 40%);
+  color: var(--color-foreground);
+  font-family: var(--font-sans), sans-serif;
+  -webkit-font-smoothing: antialiased;
+  position: relative;
+  min-height: 100vh;
+  overflow-x: hidden;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Amazon-style Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--background));
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 153, 0, 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary));
+}
+
+/* Internal panel scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 99px;
+}
+
+[data-theme='light'] .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary));
+}
+
+/* Hover effects & modern glassmorphism */
+.amazon-card {
+  background-color: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 4px 15px rgba(var(--shadow-color), 0.05);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease;
+}
+
+.amazon-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(var(--shadow-color), 0.1);
+  border-color: hsl(var(--primary));
+}
+
+/* Glass Panels */
+.glass-panel {
+  background: rgba(12, 17, 26, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme='light'] .glass-panel {
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+}
+
+/* Skeleton Loading Animation */
+.skeleton {
+  background: linear-gradient(90deg, 
+    rgba(255,255,255, 0.05) 25%, 
+    rgba(255,255,255, 0.1) 50%, 
+    rgba(255,255,255, 0.05) 75%
+  );
+  background-size: 200% 100%;
+  animation: loading-skeleton 1.5s infinite;
+  border-radius: 4px;
+}
+
+[data-theme='light'] .skeleton {
+  background: linear-gradient(90deg, 
+    rgba(0,0,0, 0.06) 25%, 
+    rgba(0,0,0, 0.12) 50%, 
+    rgba(0,0,0, 0.06) 75%
+  );
+  background-size: 200% 100%;
+}
+
+@keyframes loading-skeleton {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Zoom Container for Product page */
+.zoom-container {
+  overflow: hidden;
+  position: relative;
+  cursor: zoom-in;
+}
+
+.zoom-image {
+  transition: transform 0.15s ease-out;
+  transform-origin: center center;
+}
+
+.zoom-container:hover .zoom-image {
+  transform: scale(1.6);
+}
+
+/* Dynamic Buttons */
+.amazon-button {
+  background: linear-gradient(to bottom, #f7dfa5, #f0c14b);
+  border: 1px solid #a88734;
+  color: #111;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-weight: 500;
+  font-size: 0.825rem;
+  box-shadow: 0 1px 0 rgba(255,255,255,.4) inset;
+  transition: background 0.1s, border-color 0.1s, box-shadow 0.1s;
+  cursor: pointer;
+}
+
+.amazon-button:hover {
+  background: linear-gradient(to bottom, #f5d78e, #eeb933);
+  border-color: #846a29;
+}
+
+.amazon-button:active {
+  background: #f3d078;
+  border-color: #846a29;
+  box-shadow: 0 1px 3px rgba(0,0,0,.2) inset;
+}
+
+.amazon-button-accent {
+  background: linear-gradient(to bottom, #f5b77a, #e47911);
+  border: 1px solid #a65205;
+  color: #fff;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-weight: 500;
+  font-size: 0.825rem;
+  box-shadow: 0 1px 0 rgba(255,255,255,.3) inset;
+  transition: background 0.1s, border-color 0.1s;
+  cursor: pointer;
+}
+
+.amazon-button-accent:hover {
+  background: linear-gradient(to bottom, #f7a859, #d06d0b);
+  border-color: #894200;
+}
+
+/* Interactive charts overlay container */
+.chart-container {
+  width: 100%;
+  height: 250px;
+}
+
+/* Mega menu dropdowns list */
+.mega-menu-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 24px;
+}

@@ -1,0 +1,36 @@
+[
+  {
+    "_id": "mlzzq24ht",
+    "createdAt": "2026-05-19T10:51:11.205Z",
+    "updatedAt": "2026-05-19T10:51:11.205Z",
+    "name": "GridRunner",
+    "email": "runner@nexus.net",
+    "password": "$2b$10$w2KPqcg05VXxsDhN2jufluE04AD//fuFddz6zHR06m/TmWEJKyV.6"
+  },
+  {
+    "_id": "gfurxrl98",
+    "createdAt": "2026-05-19T13:30:17.690Z",
+    "updatedAt": "2026-05-19T13:30:17.690Z",
+    "name": "niranjan",
+    "email": "KAL@gmail.com",
+    "password": "$2b$10$TlMnwscp4jLcCpBglih/puAF2hSb3CSvNdy.pvOuC2D4q5qjTxsIa"
+  },
+  {
+    "_id": "r30s0ln9k",
+    "createdAt": "2026-05-20T13:00:13.776Z",
+    "updatedAt": "2026-05-20T13:00:13.776Z",
+    "name": "Test Runner",
+    "email": "test_fj3bpk2@nexus.net",
+    "password": "$2b$10$EGa4Of2rIyKSrTF9/jMFF..jeOfNY1KswbeEegp7v1yB5qZz8xK6m",
+    "role": "customer"
+  },
+  {
+    "_id": "yv00u398e",
+    "createdAt": "2026-05-20T13:01:03.107Z",
+    "updatedAt": "2026-05-20T13:01:03.228Z",
+    "name": "Test Runner",
+    "email": "test_3d318od@nexus.net",
+    "password": "$2b$10$Er7Fnn5dG27KtCiOYd47DO.9S84s6.oWpo4XHi9xi9Y4r5Lwf/tpa",
+    "role": "admin"
+  }
+]

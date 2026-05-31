@@ -1,0 +1,60 @@
+[
+  {
+    "_id": "bp584mlzv",
+    "createdAt": "2026-05-19T13:35:07.373Z",
+    "updatedAt": "2026-05-19T13:35:07.373Z",
+    "user": "mlzzq24ht",
+    "shoppingPersona": "Quantum Tech Specialist",
+    "colorPreferences": [
+      "#00f0ff",
+      "#ff007f"
+    ],
+    "interestCategories": [
+      "Quantum Computing",
+      "Holographic Displays",
+      "Wearables"
+    ],
+    "averageSpend": 1250,
+    "recommendedProducts": [
+      "avpkdl3ax",
+      "fmsjw3dcm",
+      "dxxyyfdaj"
+    ]
+  },
+  {
+    "_id": "4msc7fett",
+    "createdAt": "2026-05-20T13:00:13.937Z",
+    "updatedAt": "2026-05-20T13:00:13.937Z",
+    "user": "r30s0ln9k",
+    "shoppingPersona": "Bio-Hacker Enthusiast",
+    "interestCategories": [
+      "Medical Tech",
+      "Bio-links",
+      "Implants"
+    ],
+    "recommendedProducts": [
+      "m5f12vsef",
+      "vaob2hieq",
+      "shi5il090"
+    ],
+    "averageSpend": 2389
+  },
+  {
+    "_id": "ov4iijz3o",
+    "createdAt": "2026-05-20T13:01:03.221Z",
+    "updatedAt": "2026-05-20T13:01:03.221Z",
+    "user": "yv00u398e",
+    "shoppingPersona": "Neo-Industrial Designer",
+    "interestCategories": [
+      "Displays",
+      "Wearables",
+      "Peripherals"
+    ],
+    "recommendedProducts": [
+      "msrvoo9r9",
+      "m5f12vsef",
+      "vaob2hieq"
+    ],
+    "averageSpend": 1283
+  }
+]
