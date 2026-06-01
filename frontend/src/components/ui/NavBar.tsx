@@ -482,6 +482,7 @@ export function NavBar() {
                         <h4 className="font-bold text-xs text-gray-900 mb-2 border-b border-gray-100 pb-1">Your Account</h4>
                         <ul className="space-y-1.5 text-[11px] text-gray-600">
                           <li><Link href="/dashboard" className="hover:text-[#ff9900] hover:underline flex items-center gap-1"><Cpu className="w-3 h-3 text-purple-600"/> Go to Dashboard</Link></li>
+                          <li><Link href="/nexus-x" className="hover:text-[#ff9900] hover:underline flex items-center gap-1"><Cpu className="w-3 h-3 text-cyan-400"/> Nexus-X OS</Link></li>
                           <li><Link href="/orders" className="hover:text-[#ff9900] hover:underline flex items-center gap-1"><Package className="w-3 h-3 text-blue-600"/> Tracking Logs</Link></li>
                           <li><Link href="/profile" className="hover:text-[#ff9900] hover:underline flex items-center gap-1"><User className="w-3 h-3 text-emerald-600"/> Profile Edit</Link></li>
                         </ul>
@@ -566,6 +567,7 @@ export function NavBar() {
           <Link href="/shop?category=Gaming" className="px-2 py-1 border border-transparent hover:border-white rounded-sm">Gaming</Link>
           <Link href="/shop" className="px-2 py-1 border border-transparent hover:border-white rounded-sm text-[#febd69]">Today's Deals</Link>
           <Link href="/ai-copilot" className="px-2 py-1 border border-transparent hover:border-white rounded-sm text-glow-primary font-bold flex items-center gap-1"><Sparkles className="w-3 h-3 text-[#ff007f]"/> AI Copilot</Link>
+          <Link href="/nexus-x" className="px-2 py-1 border border-transparent hover:border-[#00f0ff]/50 hover:bg-[#00f0ff]/5 rounded-sm text-[#00f0ff] font-bold flex items-center gap-1"><Cpu className="w-3 h-3"/> Nexus-X OS</Link>
         </div>
 
         {/* Live system state notifier */}

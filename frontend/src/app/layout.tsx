@@ -25,7 +25,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable} dark antialiased`}>
-      <body className="h-screen w-screen overflow-hidden bg-[#030712] text-white flex flex-col">
+      <body className="min-h-screen bg-[#030712] text-white flex flex-col">
         <StoreProvider>
           {children}
         </StoreProvider>
