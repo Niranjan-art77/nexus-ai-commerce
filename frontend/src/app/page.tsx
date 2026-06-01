@@ -26,8 +26,6 @@ export default function Home() {
 
   // Active section for sidebar jumping
   const [activeHUDSection, setActiveHUDSection] = useState("COMMAND");
-  const [viewMode, setViewMode] = useState<"focus" | "unified">("focus");
-  const [osCommand, setOsCommand] = useState("");
 
   // Proxy Negotiator States
   const [budgetPriority, setBudgetPriority] = useState(80);
@@ -183,6 +181,41 @@ export default function Home() {
       clearInterval(radarInterval);
     };
   }, []);
+
+  // Intersection Observer for Sidebar Scroll Spy
+  useEffect(() => {
+    if (!mounted) return;
+
+    const sectionIds = [
+      "COMMAND", "INTELLIGENCE", "ARENA", "NEGOTIATOR", "DESTINY",
+      "TWIN", "RADAR", "SANDBOX", "GLOBAL", "AUTONOMOUS", "FEED"
+    ];
+
+    const observerOptions = {
+      root: null,
+      rootMargin: "-20% 0px -60% 0px",
+      threshold: 0
+    };
+
+    const observerCallback = (entries: IntersectionObserverEntry[]) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          setActiveHUDSection(entry.target.id);
+        }
+      });
+    };
+
+    const observer = new IntersectionObserver(observerCallback, observerOptions);
+
+    sectionIds.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) observer.observe(el);
+    });
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [mounted]);
 
   // 1. Search Logic
   const handleProductSearch = (query: string) => {
@@ -452,79 +485,7 @@ export default function Home() {
     setTimeout(executeRound, 1000);
   };
 
-  // OS Command line submission handler
-  const handleOsCommandSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const cmd = osCommand.toLowerCase().trim();
-    if (!cmd) return;
 
-    let recognized = false;
-    let feedback = "";
-
-    if (cmd.includes("negotiate") || cmd.includes("proxy")) {
-      setActiveHUDSection("NEGOTIATOR");
-      setViewMode("focus");
-      runNegotiation();
-      feedback = "Initializing Proxy Negotiator simulation...";
-      recognized = true;
-    } else if (cmd.includes("debate") || cmd.includes("arena")) {
-      setActiveHUDSection("ARENA");
-      setViewMode("focus");
-      runAgentDebate();
-      feedback = "Starting Agentic purchase debate...";
-      recognized = true;
-    } else if (cmd.includes("simulate") || cmd.includes("destiny") || cmd.includes("career")) {
-      setActiveHUDSection("DESTINY");
-      setViewMode("focus");
-      feedback = "Focussed Destiny Simulator. Adjust slider to run.";
-      recognized = true;
-    } else if (cmd.includes("twin") || cmd.includes("persona")) {
-      setActiveHUDSection("TWIN");
-      setViewMode("focus");
-      feedback = "Focussed Digital Twin configuration deck.";
-      recognized = true;
-    } else if (cmd.includes("radar") || cmd.includes("arbitrage")) {
-      setActiveHUDSection("RADAR");
-      setViewMode("focus");
-      feedback = "Focussed Live Opportunity Radar sweep.";
-      recognized = true;
-    } else if (cmd.includes("sandbox") || cmd.includes("impact")) {
-      setActiveHUDSection("SANDBOX");
-      setViewMode("focus");
-      runSandboxSimulation();
-      feedback = "Running sandbox purchase impact simulation...";
-      recognized = true;
-    } else if (cmd.includes("intel") || cmd.includes("search")) {
-      setActiveHUDSection("INTELLIGENCE");
-      setViewMode("focus");
-      const terms = cmd.split(" ");
-      const q = terms.length > 1 ? terms.slice(1).join(" ") : searchQuery;
-      if (q) {
-        setSearchQuery(q);
-        handleProductSearch(q);
-      }
-      feedback = `Crawling product intelligence for '${q || searchQuery}'...`;
-      recognized = true;
-    } else if (cmd.includes("buy") || cmd.includes("auto")) {
-      setActiveHUDSection("AUTONOMOUS");
-      setViewMode("focus");
-      dispatchAutoBuy();
-      feedback = "Authorizing auto-procurement rules...";
-      recognized = true;
-    } else if (cmd.includes("clear") || cmd.includes("reset")) {
-      setChatLog([]);
-      setArenaMessages([]);
-      feedback = "Cleared terminal buffers.";
-      recognized = true;
-    }
-
-    if (recognized) {
-      setSystemLogs(prev => [`[${new Date().toTimeString().split(' ')[0]}] [OS_SHELL] Executed: "${osCommand}". ${feedback}`, ...prev]);
-    } else {
-      setSystemLogs(prev => [`[${new Date().toTimeString().split(' ')[0]}] [OS_SHELL] Command not recognized: "${osCommand}". Try "negotiate", "debate", "search [product]", "sandbox".`, ...prev]);
-    }
-    setOsCommand("");
-  };
 
   const renderNegotiator = () => {
     const assetDetails = assetClass === "ServerCore" 
@@ -728,11 +689,7 @@ export default function Home() {
                   key={sec.id}
                   onClick={() => {
                     setActiveHUDSection(sec.id);
-                    if (viewMode === "unified") {
-                      setTimeout(() => {
-                        document.getElementById(sec.id)?.scrollIntoView({ behavior: "smooth", block: "center" });
-                      }, 50);
-                    }
+                    document.getElementById(sec.id)?.scrollIntoView({ behavior: "smooth", block: "center" });
                   }}
                   className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-[11px] font-bold uppercase tracking-wider transition-all border text-left flex-shrink-0 cursor-pointer ${
                     isActive
@@ -751,65 +708,7 @@ export default function Home() {
         {/* HUD CONTENT BOARD */}
         <div className="flex-1 space-y-8 min-w-0">
           
-          {/* STICKY SUB-NAVBAR FOR MODULE SELECT */}
-          <div className="sticky top-[72px] z-30 bg-[#0c1020]/95 backdrop-blur-md border border-white/10 p-3 rounded-2xl shadow-[0_10px_35px_rgba(0,0,0,0.6)] flex flex-col md:flex-row gap-4 items-center justify-between">
-            <div className="flex items-center gap-3 overflow-x-auto scrollbar-none w-full md:w-auto flex-nowrap py-1">
-              {[
-                { id: "COMMAND", label: "Command Center", icon: Terminal, color: "text-cyan-400 bg-cyan-400/10 border-cyan-400/20" },
-                { id: "INTELLIGENCE", label: "Product Intel", icon: Search, color: "text-cyan-400 bg-cyan-400/10 border-cyan-400/20" },
-                { id: "ARENA", label: "Agent Arena", icon: MessageSquare, color: "text-amber-400 bg-amber-400/10 border-amber-400/20" },
-                { id: "NEGOTIATOR", label: "Proxy Negotiator", icon: Briefcase, color: "text-[#00f0ff] bg-[#00f0ff]/10 border-[#00f0ff]/20" },
-                { id: "DESTINY", label: "Destiny", icon: GitBranch, color: "text-purple-400 bg-purple-400/10 border-purple-400/20" },
-                { id: "TWIN", label: "Twin Lab", icon: UserCheck, color: "text-emerald-400 bg-emerald-400/10 border-emerald-400/20" },
-                { id: "RADAR", label: "Opportunity Radar", icon: Compass, color: "text-cyan-400 bg-cyan-400/10 border-cyan-400/20" },
-                { id: "SANDBOX", label: "Reality Sandbox", icon: Layers, color: "text-indigo-400 bg-indigo-400/10 border-indigo-400/20" },
-                { id: "GLOBAL", label: "Global Radar", icon: Globe2, color: "text-sky-400 bg-sky-400/10 border-sky-400/20" },
-                { id: "AUTONOMOUS", label: "Auto-Shopping", icon: Cpu, color: "text-rose-400 bg-rose-400/10 border-rose-400/20" },
-                { id: "FEED", label: "System Alerts", icon: AlertCircle, color: "text-red-400 bg-red-400/10 border-red-400/20" }
-              ].map(sec => {
-                const Icon = sec.icon;
-                const isActive = activeHUDSection === sec.id;
-                return (
-                  <button
-                    key={sec.id}
-                    onClick={() => {
-                      setActiveHUDSection(sec.id);
-                      if (viewMode === "unified") {
-                        setTimeout(() => {
-                          document.getElementById(sec.id)?.scrollIntoView({ behavior: "smooth", block: "center" });
-                        }, 50);
-                      }
-                    }}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all border flex-shrink-0 cursor-pointer ${
-                      isActive
-                        ? `${sec.color} shadow-lg scale-105`
-                        : "bg-transparent border-transparent text-gray-400 hover:bg-white/5 hover:text-white"
-                    }`}
-                  >
-                    <Icon className="w-3 h-3" />
-                    <span>{sec.label}</span>
-                  </button>
-                );
-              })}
-            </div>
 
-            {/* View Mode Toggle Switch */}
-            <div className="flex items-center gap-1.5 bg-black/60 p-1 rounded-xl border border-white/5 shrink-0 font-mono text-[9px] w-full md:w-auto justify-center">
-              <span className="text-gray-500 uppercase tracking-wider font-bold mr-1 select-none">View:</span>
-              <button
-                onClick={() => setViewMode("focus")}
-                className={`px-2.5 py-1 rounded-lg font-bold transition-all cursor-pointer ${viewMode === "focus" ? "bg-cyan-500 text-black shadow-md font-mono" : "text-gray-400 hover:text-white"}`}
-              >
-                Focus Mode
-              </button>
-              <button
-                onClick={() => setViewMode("unified")}
-                className={`px-2.5 py-1 rounded-lg font-bold transition-all cursor-pointer ${viewMode === "unified" ? "bg-cyan-500 text-black shadow-md font-mono" : "text-gray-400 hover:text-white"}`}
-              >
-                Unified (Scroll)
-              </button>
-            </div>
-          </div>
 
           {/* SECTION 2: AI COMMAND CENTER (HERO VIEW) */}
           <section id="COMMAND" className="scroll-mt-28">
@@ -856,33 +755,7 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* OS COMMAND INPUT BAR */}
-                <div className="mt-6">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Terminal className="w-4 h-4 text-[#ff9900]" />
-                    <h4 className="text-[10px] font-black uppercase tracking-widest text-[#ff9900] font-mono">
-                      Autonomous OS Terminal Shell
-                    </h4>
-                  </div>
-                  <form onSubmit={handleOsCommandSubmit} className="flex gap-2">
-                    <div className="flex-1 relative flex items-center">
-                      <span className="absolute left-4 text-cyan-400 font-mono text-xs select-none">&gt;</span>
-                      <input
-                        type="text"
-                        value={osCommand}
-                        onChange={(e) => setOsCommand(e.target.value)}
-                        placeholder="Type system commands here... (e.g. 'negotiate data', 'debate phone', 'search laptops', 'sandbox', 'clear')"
-                        className="w-full bg-black/60 border border-cyan-500/20 hover:border-cyan-500/40 rounded-xl py-3 pl-8 pr-4 text-xs font-mono text-cyan-400 focus:outline-none focus:border-cyan-400/80 placeholder:text-cyan-900"
-                      />
-                    </div>
-                    <button
-                      type="submit"
-                      className="px-6 rounded-xl text-xs font-bold font-mono tracking-wider transition-all bg-gradient-to-r from-cyan-400 to-indigo-500 hover:from-cyan-500 hover:to-indigo-600 text-black cursor-pointer shadow-[0_0_15px_rgba(6,182,212,0.3)] shrink-0"
-                    >
-                      EXEC
-                    </button>
-                  </form>
-                </div>
+
 
                 {/* System logs feed console */}
                 <div className="mt-6">
@@ -904,12 +777,10 @@ export default function Home() {
           </section>
 
           {/* TWO-COLUMN GRID OF FUNCTION WIDGETS */}
-          {(viewMode === "unified" || activeHUDSection === "INTELLIGENCE" || activeHUDSection === "ARENA") && (
-            <div className={viewMode === "focus" ? "w-full max-w-4xl mx-auto" : "grid grid-cols-1 xl:grid-cols-2 gap-8"}>
-              
-              {/* MODULE 1: UNIVERSAL PRODUCT INTELLIGENCE ENGINE */}
-              {(viewMode === "unified" || activeHUDSection === "INTELLIGENCE") && (
-                <section id="INTELLIGENCE" className="scroll-mt-28">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+            
+            {/* MODULE 1: UNIVERSAL PRODUCT INTELLIGENCE ENGINE */}
+            <section id="INTELLIGENCE" className="scroll-mt-28">
                   <div className="rounded-3xl border border-white/10 bg-slate-950/50 backdrop-blur-xl p-6 shadow-2xl h-full flex flex-col justify-between">
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
@@ -1033,12 +904,10 @@ export default function Home() {
                       </div>
                     )}
                   </div>
-                </section>
-              )}
+            </section>
 
-              {/* MODULE 3: AGENT BATTLE ARENA */}
-              {(viewMode === "unified" || activeHUDSection === "ARENA") && (
-                <section id="ARENA" className="scroll-mt-28">
+            {/* MODULE 3: AGENT BATTLE ARENA */}
+            <section id="ARENA" className="scroll-mt-28">
                   <div className="rounded-3xl border border-white/10 bg-slate-950/50 backdrop-blur-xl p-6 shadow-2xl h-full flex flex-col justify-between">
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
@@ -1129,26 +998,20 @@ export default function Home() {
                       </div>
                     )}
                   </div>
-                </section>
-              )}
+            </section>
 
-            </div>
-          )}
+          </div>
 
           {/* MODULE: PROXY NEGOTIATOR PLAYGROUND */}
-          {(viewMode === "unified" || activeHUDSection === "NEGOTIATOR") && (
-            <div className="w-full max-w-4xl mx-auto">
-              {renderNegotiator()}
-            </div>
-          )}
+          <div className="w-full max-w-4xl mx-auto">
+            {renderNegotiator()}
+          </div>
 
           {/* SIMULATION & HORIZONS ROW */}
-          {(viewMode === "unified" || activeHUDSection === "DESTINY" || activeHUDSection === "TWIN") && (
-            <div className={viewMode === "focus" ? "w-full max-w-4xl mx-auto" : "grid grid-cols-1 xl:grid-cols-2 gap-8"}>
-              
-              {/* MODULE 4: FUTURE SELF SIMULATOR */}
-              {(viewMode === "unified" || activeHUDSection === "DESTINY") && (
-                <section id="DESTINY" className="scroll-mt-28">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+            
+            {/* MODULE 4: FUTURE SELF SIMULATOR */}
+            <section id="DESTINY" className="scroll-mt-28">
                   <div className="rounded-3xl border border-white/10 bg-slate-950/50 backdrop-blur-xl p-6 shadow-2xl h-full flex flex-col justify-between">
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
@@ -1240,12 +1103,10 @@ export default function Home() {
                       Adjust slider to dynamically vector life projections.
                     </div>
                   </div>
-                </section>
-              )}
+            </section>
 
-              {/* MODULE 5: DIGITAL TWIN LAB */}
-              {(viewMode === "unified" || activeHUDSection === "TWIN") && (
-                <section id="TWIN" className="scroll-mt-28">
+            {/* MODULE 5: DIGITAL TWIN LAB */}
+            <section id="TWIN" className="scroll-mt-28">
                   <div className="rounded-3xl border border-white/10 bg-slate-950/50 backdrop-blur-xl p-6 shadow-2xl h-full flex flex-col justify-between">
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
@@ -1316,19 +1177,15 @@ export default function Home() {
                       </button>
                     </div>
                   </div>
-                </section>
-              )}
+            </section>
 
-            </div>
-          )}
+          </div>
 
           {/* SONAR RADAR & SIMULATOR GRID */}
-          {(viewMode === "unified" || activeHUDSection === "RADAR" || activeHUDSection === "SANDBOX") && (
-            <div className={viewMode === "focus" ? "w-full max-w-4xl mx-auto" : "grid grid-cols-1 xl:grid-cols-2 gap-8"}>
-              
-              {/* MODULE 6: OPPORTUNITY RADAR */}
-              {(viewMode === "unified" || activeHUDSection === "RADAR") && (
-                <section id="RADAR" className="scroll-mt-28">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+            
+            {/* MODULE 6: OPPORTUNITY RADAR */}
+            <section id="RADAR" className="scroll-mt-28">
                   <div className="rounded-3xl border border-white/10 bg-slate-950/50 backdrop-blur-xl p-6 shadow-2xl h-full flex flex-col justify-between">
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
@@ -1402,12 +1259,10 @@ export default function Home() {
                       <span>3 Active anomalies detected</span>
                     </div>
                   </div>
-                </section>
-              )}
+            </section>
 
-              {/* MODULE 7: REALITY SANDBOX */}
-              {(viewMode === "unified" || activeHUDSection === "SANDBOX") && (
-                <section id="SANDBOX" className="scroll-mt-28">
+            {/* MODULE 7: REALITY SANDBOX */}
+            <section id="SANDBOX" className="scroll-mt-28">
                   <div className="rounded-3xl border border-white/10 bg-slate-950/50 backdrop-blur-xl p-6 shadow-2xl h-full flex flex-col justify-between">
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
@@ -1482,19 +1337,15 @@ export default function Home() {
                       <span>Gray: Pre-purchase metric | Indigo: Post-purchase projection</span>
                     </div>
                   </div>
-                </section>
-              )}
+            </section>
 
-            </div>
-          )}
+          </div>
 
           {/* TICKERS & AUTONOMOUS ENGINE */}
-          {(viewMode === "unified" || activeHUDSection === "GLOBAL" || activeHUDSection === "AUTONOMOUS") && (
-            <div className={viewMode === "focus" ? "w-full max-w-4xl mx-auto" : "grid grid-cols-1 xl:grid-cols-2 gap-8"}>
-              
-              {/* MODULE 8: GLOBAL MARKET RADAR */}
-              {(viewMode === "unified" || activeHUDSection === "GLOBAL") && (
-                <section id="GLOBAL" className="scroll-mt-28">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+            
+            {/* MODULE 8: GLOBAL MARKET RADAR */}
+            <section id="GLOBAL" className="scroll-mt-28">
                   <div className="rounded-3xl border border-white/10 bg-slate-950/50 backdrop-blur-xl p-6 shadow-2xl h-full flex flex-col justify-between">
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
@@ -1548,12 +1399,10 @@ export default function Home() {
                       Aggregating logistics metrics across Chennai, Rotterdam, Shenzhen ports.
                     </div>
                   </div>
-                </section>
-              )}
+            </section>
 
-              {/* MODULE 9: AUTONOMOUS SHOPPING ENGINE */}
-              {(viewMode === "unified" || activeHUDSection === "AUTONOMOUS") && (
-                <section id="AUTONOMOUS" className="scroll-mt-28">
+            {/* MODULE 9: AUTONOMOUS SHOPPING ENGINE */}
+            <section id="AUTONOMOUS" className="scroll-mt-28">
                   <div className="rounded-3xl border border-white/10 bg-slate-950/50 backdrop-blur-xl p-6 shadow-2xl h-full flex flex-col justify-between">
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
@@ -1616,16 +1465,13 @@ export default function Home() {
                       <span>Direct API Escrow status: INACTIVE</span>
                     </div>
                   </div>
-                </section>
-              )}
+            </section>
 
-            </div>
-          )}
+          </div>
 
           {/* MODULE 10: NEXUS INTELLIGENCE ALERTS FEED */}
-          {(viewMode === "unified" || activeHUDSection === "FEED") && (
-            <div className="w-full max-w-4xl mx-auto">
-              <section id="FEED" className="scroll-mt-28">
+          <div className="w-full max-w-4xl mx-auto">
+            <section id="FEED" className="scroll-mt-28">
                 <div className="rounded-3xl border border-white/10 bg-slate-950/50 backdrop-blur-xl p-6 shadow-2xl">
                   <div className="flex items-center gap-2 mb-6">
                     <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
@@ -1662,7 +1508,6 @@ export default function Home() {
                 </div>
               </section>
             </div>
-          )}
 
         </div>
       </div>
