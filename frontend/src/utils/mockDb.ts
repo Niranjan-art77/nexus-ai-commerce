@@ -1,6 +1,17 @@
 // 2050 Quantum Local Database & API Simulator
 // Persists records in localStorage to ensure all marketplace actions remain active client-side.
 
+if (typeof window === "undefined") {
+  (global as any).localStorage = {
+    getItem: () => null,
+    setItem: () => {},
+    removeItem: () => {},
+    clear: () => {},
+    length: 0,
+    key: () => null,
+  };
+}
+
 export interface MockReview {
   _id: string;
   user: string;
