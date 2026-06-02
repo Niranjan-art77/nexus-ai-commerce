@@ -520,6 +520,100 @@ const initializeStorage = () => {
 
 initializeStorage();
 
+const synthesizeProducts = (query: string): MockProduct[] => {
+  const cleanQuery = query.toLowerCase().trim();
+  if (!cleanQuery) return [];
+
+  let category = "Accessories";
+  if (cleanQuery.includes("phone") || cleanQuery.includes("iphone") || cleanQuery.includes("samsung") || cleanQuery.includes("pixel")) {
+    category = "Smartphones";
+  } else if (cleanQuery.includes("laptop") || cleanQuery.includes("macbook") || cleanQuery.includes("dell") || cleanQuery.includes("xps") || cleanQuery.includes("book")) {
+    category = "Laptops";
+  } else if (cleanQuery.includes("keyboard") || cleanQuery.includes("mouse") || cleanQuery.includes("headset") || cleanQuery.includes("rtx") || cleanQuery.includes("gpu")) {
+    category = "Gaming";
+  } else if (cleanQuery.includes("monitor") || cleanQuery.includes("display") || cleanQuery.includes("screen")) {
+    category = "Monitors";
+  } else if (cleanQuery.includes("companion") || cleanQuery.includes("rabbit") || cleanQuery.includes("core") || cleanQuery.includes("ai")) {
+    category = "AI Devices";
+  } else if (cleanQuery.includes("nest") || cleanQuery.includes("ring") || cleanQuery.includes("lock") || cleanQuery.includes("bulb")) {
+    category = "Smart Home";
+  } else if (cleanQuery.includes("quest") || cleanQuery.includes("vision") || cleanQuery.includes("haptic") || cleanQuery.includes("vr")) {
+    category = "VR Tech";
+  } else if (cleanQuery.includes("station") || cleanQuery.includes("xeon") || cleanQuery.includes("threadripper")) {
+    category = "Workstations";
+  }
+
+  let brand = "Nexus";
+  const brandKeywords = ["apple", "samsung", "google", "dell", "hp", "lenovo", "asus", "razer", "sony", "logitech", "corsair", "lg", "intel", "amd", "nvidia"];
+  for (const kw of brandKeywords) {
+    if (cleanQuery.includes(kw)) {
+      brand = kw.charAt(0).toUpperCase() + kw.slice(1);
+      break;
+    }
+  }
+
+  const list: MockProduct[] = [];
+  const adjectives = ["Quantum", "Apex Pro", "Hyperion", "Spectre", "Nova", "Evolution X"];
+  
+  for (let i = 0; i < 3; i++) {
+    const adj = adjectives[i % adjectives.length]!;
+    const name = `${brand} ${adj} ${query.charAt(0).toUpperCase() + query.slice(1)}`;
+    const price = Math.round(49 + Math.random() * 1200);
+    const discount = Math.random() > 0.3 ? Math.floor(5 + Math.random() * 20) : 0;
+    const rating = Number((4.1 + Math.random() * 0.8).toFixed(1));
+    const newId = `prod-synth-${Math.random().toString(36).substring(2, 9)}`;
+
+    const newProd: MockProduct = {
+      _id: newId,
+      id: newId,
+      name,
+      brand,
+      category,
+      description: `State-of-the-art 2090-model ${category.toLowerCase()} unit, custom configured by ${brand} for optimized productivity buffers and performance. Features high-bandwidth materials and certified system compatibility.`,
+      price,
+      discount,
+      rating,
+      numReviews: Math.floor(10 + Math.random() * 150),
+      stock: Math.floor(2 + Math.random() * 50),
+      seller: `${brand} Authorized Channel`,
+      images: [
+        "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=600&q=80",
+        "https://images.unsplash.com/photo-1558002038-1055907df827?auto=format&fit=crop&w=600&q=80"
+      ],
+      specifications: {
+        "Brand": brand,
+        "Class": "Enterprise Core",
+        "Warranty": "2-Year certified warranty",
+        "Model Year": "2090"
+      },
+      tags: [brand.toLowerCase(), category.toLowerCase(), cleanQuery],
+      reviews: [
+        { _id: `rev-${newId}-1`, user: "Niranjan A.", rating: 5, text: "Incredible processing speeds. Perfect addition to my dev setup.", createdAt: new Date().toISOString() }
+      ],
+      features: ["Certified System Compatibility", "Optimized Heat Dissipation"],
+      idealUserType: "Creative Professional",
+      originalPrice: discount > 0 ? Math.round(price / (1 - discount / 100)) : price,
+      deliveryDays: 1,
+      approvalStatus: "Approved"
+    };
+
+    list.push(newProd);
+  }
+
+  if (typeof window !== "undefined") {
+    try {
+      const currentList: MockProduct[] = JSON.parse(localStorage.getItem("nexus_fallback_products_v3") || "[]");
+      const updated = [...list, ...currentList];
+      localStorage.setItem("nexus_fallback_products_v3", JSON.stringify(updated));
+      localStorage.setItem("nexus_fallback_products", JSON.stringify(updated));
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  return list;
+};
+
 export const mockDb = {
   isFallbackActive: () => {
     return true;
@@ -561,6 +655,11 @@ export const mockDb = {
         p.brand.toLowerCase().includes(q) ||
         (p.tags && p.tags.some(tag => tag.toLowerCase().includes(q)))
       );
+    }
+
+    // If no items match, dynamically generate them based on the search query
+    if (list.length === 0 && filters.search) {
+      list = synthesizeProducts(filters.search);
     }
 
     // Price Filter

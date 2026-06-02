@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/store/store";
-import { removeFromCart, updateQuantity, addToCart } from "@/store/slices/cartSlice";
+import { removeFromCart, updateQuantity, updateItemRoute, addToCart } from "@/store/slices/cartSlice";
 import { ShoppingCart, Plus, Minus, Trash2, Cpu, ShieldCheck, ArrowRight, Zap, Gauge } from "lucide-react";
 import { GlassPanel } from "@/components/ui/GlassPanel";
 import { useRouter } from "next/navigation";
@@ -45,7 +45,7 @@ export default function CartPage() {
       {/* CORE WORKSPACE GRID */}
       <div className="flex-grow flex overflow-hidden h-[calc(100vh-64px)] w-full z-10 relative">
         
-        {/* LEFT COLUMN: SHOPPING CART ITEMS & RECOMMENDED CO-PILOT ADDITIONS (SCROLLABLE) */}
+        {/* LEFT COLUMN: SHOPPING CART ITEMS */}
         <div className="flex-grow h-full flex flex-col overflow-y-auto custom-scrollbar p-8">
           <div className="max-w-4xl w-full">
             <h1 className="text-3xl font-black text-white uppercase tracking-tighter mb-8 flex items-center gap-3">
@@ -53,7 +53,7 @@ export default function CartPage() {
                System Cart
             </h1>
 
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-4 text-left">
               {items.length === 0 ? (
                 <GlassPanel className="p-12 text-center flex flex-col items-center justify-center">
                   <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
@@ -63,7 +63,7 @@ export default function CartPage() {
                   <p className="text-xs text-gray-400 mb-6 font-mono">Add items to your cart from the workstation shop.</p>
                   <button 
                     onClick={() => router.push("/shop")}
-                    className="px-5 py-2.5 bg-white text-black font-bold uppercase tracking-widest text-[10px] rounded-xl hover:bg-[#00f0ff] transition-all cursor-pointer"
+                    className="px-5 py-2.5 bg-white text-black font-bold uppercase tracking-widest text-[10px] rounded-xl hover:bg-[#ff9900] transition-all cursor-pointer"
                   >
                     Browse Shop
                   </button>
@@ -86,8 +86,33 @@ export default function CartPage() {
                       </div>
                       
                       <div className="flex-grow text-center sm:text-left font-mono">
-                        <h3 className="text-lg font-bold text-white tracking-wide mb-1">{item.name}</h3>
-                        <p className="text-[#00f0ff] text-sm font-bold">${item.price.toLocaleString()}</p>
+                        <h3 className="text-base font-black text-white tracking-wide mb-1 capitalize truncate max-w-sm">{item.name}</h3>
+                        
+                        {/* Retailer Routing Select */}
+                        <div className="flex items-center gap-2 mt-2">
+                          <span className="text-[9px] text-gray-500 font-bold uppercase tracking-wider">Route Checkout:</span>
+                          <select
+                            value={item.routedRetailer || "Nexus Store"}
+                            onChange={(e) => {
+                              const selectedPlatform = e.target.value;
+                              const base = item.basePrice || item.price;
+                              let adjustedPrice = base;
+                              if (selectedPlatform === "Amazon") adjustedPrice = Math.round(base * 1.09);
+                              else if (selectedPlatform === "Flipkart") adjustedPrice = Math.round(base * 1.06);
+                              else if (selectedPlatform === "Myntra") adjustedPrice = Math.round(base * 1.14);
+                              else if (selectedPlatform === "Croma") adjustedPrice = Math.round(base * 1.01);
+                              else if (selectedPlatform === "Reliance Digital") adjustedPrice = Math.round(base * 1.04);
+                              dispatch(updateItemRoute({ id: item.id, routedRetailer: selectedPlatform, price: adjustedPrice }));
+                            }}
+                            className="bg-[#111827] border border-white/10 rounded px-2 py-0.5 text-[9px] text-gray-300 focus:outline-none"
+                          >
+                            {["Amazon", "Flipkart", "Myntra", "Croma", "Reliance Digital", "Nexus Store"].map(p => (
+                              <option key={p} value={p}>{p}</option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <p className="text-[#ff9900] text-sm font-black mt-2">${item.price.toLocaleString()}</p>
                       </div>
 
                       <div className="flex items-center gap-4">
@@ -122,21 +147,21 @@ export default function CartPage() {
               {/* Recommended Pairings */}
               {items.length > 0 && (
                 <motion.div 
-                  initial={{ opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
-                  className="mt-4 p-[1px] rounded-xl bg-gradient-to-r from-[#8a2be2]/50 to-[#ff007f]/50 relative overflow-hidden group cursor-pointer"
+                   initial={{ opacity: 0, y: 15 }}
+                   animate={{ opacity: 1, y: 0 }}
+                   transition={{ delay: 0.2 }}
+                   className="mt-4 p-[1px] rounded-xl bg-gradient-to-r from-[#ff9900]/50 to-transparent relative overflow-hidden group cursor-pointer"
                 >
                   <div className="absolute inset-0 bg-black/40 backdrop-blur-md" />
                   <div className="relative z-10 bg-black/75 rounded-lg p-5 flex flex-col sm:flex-row items-center gap-5 group-hover:bg-black/60 transition-colors">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#8a2be2] to-[#ff007f] flex items-center justify-center p-[1px] shadow-[0_0_15px_rgba(138,43,226,0.2)] flex-shrink-0">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#ff9900] to-transparent flex items-center justify-center p-[1px] shadow-[0_0_15px_rgba(255,153,0,0.15)] flex-shrink-0">
                       <div className="w-full h-full bg-black rounded-full flex items-center justify-center">
                         <Cpu className="w-5 h-5 text-white" />
                       </div>
                     </div>
                     
                     <div className="flex-grow text-center sm:text-left font-mono">
-                      <h4 className="text-xs font-bold text-[#8a2be2] uppercase tracking-widest flex items-center justify-center sm:justify-start gap-1.5 mb-0.5">
+                      <h4 className="text-xs font-bold text-[#ff9900] uppercase tracking-widest flex items-center justify-center sm:justify-start gap-1.5 mb-0.5">
                         Recommended Hardware Pairing
                       </h4>
                       <p className="text-white text-xs">Add the <span className="font-bold">Holo-Display Pro</span> to maximize workstation display rendering capabilities.</p>
@@ -149,10 +174,12 @@ export default function CartPage() {
                           name: "Holo-Display Pro",
                           price: 1450,
                           quantity: 1,
-                          image: "from-[#ff007f] to-transparent"
+                          image: "",
+                          basePrice: 1450,
+                          routedRetailer: "Nexus Store"
                         }));
                       }}
-                      className="px-4 py-2 bg-[#8a2be2]/10 border border-[#8a2be2]/30 text-white text-[10px] font-mono font-bold uppercase tracking-widest rounded-lg hover:bg-[#8a2be2]/30 transition-all whitespace-nowrap cursor-pointer"
+                      className="px-4 py-2 bg-[#ff9900]/10 border border-[#ff9900]/30 text-white text-[10px] font-mono font-bold uppercase tracking-widest rounded-lg hover:bg-[#ff9900]/30 transition-all whitespace-nowrap cursor-pointer"
                     >
                       Add for $1,450
                     </button>
@@ -166,16 +193,16 @@ export default function CartPage() {
         {/* RIGHT COLUMN: ORDER SUMMARY SIDEBAR */}
         {items.length > 0 && (
           <aside className="w-96 h-full flex flex-col border-l border-white/5 bg-black/30 p-6 flex-shrink-0 justify-between">
-            <div className="flex flex-col gap-6">
+            <div className="flex flex-col gap-6 text-left">
               <h3 className="text-xs font-black uppercase tracking-widest mb-2 border-b border-white/5 pb-3 text-white font-mono">Order Summary</h3>
               
               {/* Telemetry Metrics */}
               <div className="p-4 rounded-xl bg-black/40 border border-white/5 space-y-3 font-mono text-[10px]">
                 <div className="flex justify-between items-center text-gray-500">
                   <span className="flex items-center gap-1.5 uppercase">
-                    <Zap className="w-3.5 h-3.5 text-[#00f0ff]" /> Workstation Estimated TDP
+                    <Zap className="w-3.5 h-3.5 text-[#ff9900]" /> Workstation Estimated TDP
                   </span>
-                  <span className="text-[#00f0ff] font-bold">{(subtotal * 0.12).toFixed(2)} W</span>
+                  <span className="text-[#ff9900] font-bold">{(subtotal * 0.12).toFixed(2)} W</span>
                 </div>
                 <div className="flex justify-between items-center text-gray-500">
                   <span className="flex items-center gap-1.5 uppercase">
@@ -184,7 +211,7 @@ export default function CartPage() {
                   <span className="text-emerald-400 font-bold">{(subtotal * 0.08).toFixed(1)} kg CO2</span>
                 </div>
                 <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden relative">
-                  <div className="absolute top-0 left-0 h-full bg-[#00f0ff] rounded-full" style={{ width: `${Math.min((subtotal / 100), 100)}%` }} />
+                  <div className="absolute top-0 left-0 h-full bg-[#ff9900] rounded-full" style={{ width: `${Math.min((subtotal / 100), 100)}%` }} />
                   <div className="absolute top-0 right-0 h-full bg-emerald-400" style={{ width: `${Math.min((subtotal * 0.08 / 10), 100)}%` }} />
                 </div>
               </div>
@@ -200,16 +227,16 @@ export default function CartPage() {
                   <span className="text-white">${tax.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                 </div>
                 <div className="flex justify-between text-gray-400">
-                  <span>Shipping</span>
-                  <span className="text-emerald-400 uppercase tracking-widest text-[9px] font-bold">Standard Shipping</span>
+                  <span>Checkout Route Routing</span>
+                  <span className="text-emerald-400 uppercase tracking-widest text-[9px] font-bold">Platform API Gateway</span>
                 </div>
               </div>
             </div>
 
             <div className="flex flex-col gap-4 mt-6">
-              <div className="flex justify-between items-end border-t border-white/5 pt-4 font-mono">
+              <div className="flex justify-between items-end border-t border-white/5 pt-4 font-mono text-left">
                 <span className="text-xs text-gray-400 uppercase tracking-widest">Total Value</span>
-                <span className="text-2xl font-black text-[#00f0ff]">${total.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                <span className="text-2xl font-black text-[#ff9900] text-glow-primary">${total.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
               </div>
 
               <button 
@@ -219,7 +246,7 @@ export default function CartPage() {
                 <span className="relative z-10 flex items-center justify-center gap-1.5">
                   <ShieldCheck className="w-4 h-4" /> PROCEED TO CHECKOUT
                 </span>
-                <div className="absolute inset-0 bg-gradient-to-r from-[#00f0ff] to-[#8a2be2] transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-500 ease-out" />
+                <div className="absolute inset-0 bg-gradient-to-r from-[#ff9900] to-transparent transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-500 ease-out" />
               </button>
 
               <div className="text-center font-mono text-[9px] text-gray-600">

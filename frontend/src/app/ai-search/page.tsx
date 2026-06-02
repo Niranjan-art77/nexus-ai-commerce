@@ -14,6 +14,9 @@ export default function AISearchPage() {
   const [retailerPrices, setRetailerPrices] = useState<any>(null);
   const [suggestions, setSuggestions] = useState<MockProduct[]>([]);
   const [isListening, setIsListening] = useState(false);
+  const [selectedRetailers, setSelectedRetailers] = useState<string[]>([
+    "Amazon", "Flipkart", "Myntra", "Croma", "Reliance Digital", "Nexus Store"
+  ]);
 
   const allProducts = useMemo(() => mockDb.getProducts({}), []);
 
@@ -45,6 +48,22 @@ export default function AISearchPage() {
       });
     }
   }, [selectedProduct]);
+
+  const bestRetailerOffer = useMemo(() => {
+    if (!selectedProduct || !retailerPrices) return null;
+    const offers = [
+      { platform: "Amazon", price: retailerPrices.amazon, rating: 4.6 },
+      { platform: "Flipkart", price: retailerPrices.flipkart, rating: 4.4 },
+      { platform: "Myntra", price: retailerPrices.myntra, rating: 4.2 },
+      { platform: "Croma", price: retailerPrices.croma, rating: 4.5 },
+      { platform: "Reliance Digital", price: retailerPrices.reliance, rating: 4.3 },
+      { platform: "Nexus Store", price: retailerPrices.nexus, rating: 4.9 }
+    ];
+    const activeOffers = offers.filter(o => selectedRetailers.includes(o.platform));
+    if (activeOffers.length === 0) return null;
+    activeOffers.sort((a, b) => a.price - b.price);
+    return activeOffers[0]!;
+  }, [selectedProduct, retailerPrices, selectedRetailers]);
 
   const startVoiceSearch = () => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -153,6 +172,29 @@ export default function AISearchPage() {
                   ))}
                 </div>
               )}
+
+              {/* Retailer Source Checklist */}
+              <div className="flex flex-wrap items-center gap-3 pt-2 font-mono text-[9px] uppercase text-gray-400 select-none text-left">
+                <span className="font-bold text-white">Index Sources:</span>
+                {["Amazon", "Flipkart", "Myntra", "Croma", "Reliance Digital", "Nexus Store"].map((r) => {
+                  const isChecked = selectedRetailers.includes(r);
+                  return (
+                    <label key={r} className="flex items-center gap-1.5 cursor-pointer hover:text-white transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={() => {
+                          setSelectedRetailers(prev => 
+                            prev.includes(r) ? prev.filter(x => x !== r) : [...prev, r]
+                          );
+                        }}
+                        className="w-3 h-3 accent-[#ff9900] bg-black rounded border border-white/20"
+                      />
+                      <span>{r}</span>
+                    </label>
+                  );
+                })}
+              </div>
             </div>
 
             {selectedProduct && retailerPrices && (
@@ -176,7 +218,7 @@ export default function AISearchPage() {
                     { platform: "Croma", price: retailerPrices.croma, rating: 4.5, stock: "In Stock" },
                     { platform: "Reliance Digital", price: retailerPrices.reliance, rating: 4.3, stock: "In Stock" },
                     { platform: "Nexus Store", price: retailerPrices.nexus, rating: 4.9, stock: "Priority Delivery", best: true }
-                  ].map((item) => (
+                  ].filter(item => selectedRetailers.includes(item.platform)).map((item) => (
                     <div 
                       key={item.platform}
                       className={`p-4 rounded-2xl border text-left flex flex-col justify-between font-mono relative overflow-hidden transition-all ${
@@ -217,39 +259,40 @@ export default function AISearchPage() {
                 <span className="text-[10px] font-mono uppercase tracking-widest font-black text-gray-300">AI Recommendation Engine</span>
               </div>
 
-              {selectedProduct ? (
+              {selectedProduct && bestRetailerOffer ? (
                 <div className="space-y-3 font-mono text-[11px] text-gray-300">
                   <p className="leading-relaxed font-light">
-                    &gt; Pricing indexes analyzed. <strong>Nexus Store</strong> features the lowest rate at <strong>${selectedProduct.price}</strong>, saving <strong>9%</strong> compared to traditional platforms.
+                    &gt; Pricing indexes analyzed. Across active channels, <strong>{bestRetailerOffer.platform}</strong> features the lowest rate at <strong>${bestRetailerOffer.price.toLocaleString()}</strong>, saving <strong>{Math.round((retailerPrices.amazon - bestRetailerOffer.price) / retailerPrices.amazon * 100)}%</strong> compared to standard listings.
                   </p>
                   <div className="p-3 bg-[#ff9900]/5 border border-[#ff9900]/20 rounded-xl">
                     <span className="text-[9px] uppercase tracking-wider text-[#ff9900] font-bold block mb-1">Ecosystem Verdict:</span>
-                    Optimal purchasing conditions met. 1-day shipping is enabled.
+                    Optimal purchasing conditions met. Order routed via {bestRetailerOffer.platform} API.
                   </div>
                 </div>
               ) : (
                 <div className="h-40 flex flex-col items-center justify-center text-center text-gray-600">
                   <AlertCircle className="w-8 h-8 mb-2 text-gray-600 animate-pulse" />
-                  <span>Specify search keys to compute intelligence scores.</span>
+                  <span>Specify search keys and enable retailers to compute intelligence scores.</span>
                 </div>
               )}
             </div>
 
-            {selectedProduct && (
+            {selectedProduct && bestRetailerOffer && (
               <button
                 onClick={() => {
                   dispatch(addToCartAction({
                     id: selectedProduct._id,
                     name: selectedProduct.name,
-                    price: selectedProduct.price,
+                    price: bestRetailerOffer.price,
                     quantity: 1,
-                    image: selectedProduct.images?.[0] || ""
+                    image: selectedProduct.images?.[0] || "",
+                    routedRetailer: bestRetailerOffer.platform
                   }));
-                  alert(`${selectedProduct.name} added to cart!`);
+                  alert(`${selectedProduct.name} routed via ${bestRetailerOffer.platform} added to cart!`);
                 }}
                 className="w-full mt-4 py-2.5 bg-[#ff9900] hover:bg-[#ffb700] text-black font-bold uppercase text-[10px] tracking-wider rounded-xl transition-all cursor-pointer font-mono"
               >
-                Buy Direct (Save 9%)
+                Buy via {bestRetailerOffer.platform}
               </button>
             )}
           </div>

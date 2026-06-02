@@ -3,14 +3,14 @@
 import { useState, useEffect, useMemo } from "react";
 import { NavBar } from "@/components/ui/NavBar";
 import { mockDb, MockProduct } from "@/utils/mockDb";
-import { Sparkles, Terminal, Activity, Zap, Play, Search, AlertCircle, RefreshCw, Cpu, Database, MessageSquare } from "lucide-react";
+import { Sparkles, Terminal, Activity, Zap, Play, Search, AlertCircle, RefreshCw, Cpu, Database, MessageSquare, ShieldAlert } from "lucide-react";
 
 export default function NexusAILabPage() {
   const [activeTab, setActiveTab] = useState("arena");
   const allProducts = useMemo(() => mockDb.getProducts({}), []);
 
   // 1. AI Agent Arena States
-  const [arenaQuery, setArenaQuery] = useState("Purchase MacBook Pro M3 Max");
+  const [arenaQuery, setArenaQuery] = useState("Purchase MacBook Pro M3 Max (2090 Model)");
   const [arenaLogs, setArenaLogs] = useState<any[]>([]);
   const [consensusScore, setConsensusScore] = useState(50);
   const [isDebating, setIsDebating] = useState(false);
@@ -39,6 +39,18 @@ export default function NexusAILabPage() {
       color: "text-emerald-400 border-emerald-500/20 bg-emerald-500/5",
       text: "I located a parallel buyer pool in the Bangalore node. If we group our orders, the seller agent will trigger a bulk 12% cash-back rebate.",
       impact: 10
+    },
+    {
+      agent: "Sustainability Agent",
+      color: "text-lime-400 border-lime-500/20 bg-lime-500/5",
+      text: "Constructed using 85% recycled composites. Shipped via carbon-offset autonomous grids. Overall ecosystem score is rated A+.",
+      impact: 5
+    },
+    {
+      agent: "2090 Security Agent",
+      color: "text-red-400 border-red-500/20 bg-red-500/5",
+      text: "Virtualization ports and firewall keys validated. No security leakage observed during compile sequences.",
+      impact: 10
     }
   ];
 
@@ -58,7 +70,7 @@ export default function NexusAILabPage() {
         clearInterval(interval);
         setIsDebating(false);
       }
-    }, 1500);
+    }, 1200);
   };
 
   // 2. Market Simulator States
@@ -71,19 +83,18 @@ export default function NexusAILabPage() {
   const runMarketSimulation = () => {
     setIsSimulating(true);
     setTimeout(() => {
-      // Basic price elasticity calculation
       const elasticity = 0.8;
       const supplyMultiplier = 1 + (50 - supplyIndex) / 100 * elasticity;
       const demandMultiplier = 1 + (demandIndex - 50) / 100 * elasticity;
       const finalPrice = Math.round(basePriceInput * supplyMultiplier * demandMultiplier);
       setSimulatedPrice(finalPrice);
       setIsSimulating(false);
-    }, 1000);
+    }, 800);
   };
 
   // 3. Future Price Predictor States
   const [predProductSelected, setPredProductSelected] = useState<MockProduct | null>(allProducts[0] || null);
-  const [predictDays, setPredictDays] = useState(30);
+  const [predictYear, setPredictYear] = useState(2090);
   const [predLowest, setPredLowest] = useState(0);
   const [isPredicting, setIsPredicting] = useState(false);
 
@@ -91,8 +102,10 @@ export default function NexusAILabPage() {
     if (!predProductSelected) return;
     setIsPredicting(true);
     setTimeout(() => {
-      const dropMultiplier = 0.92 - (predictDays / 365) * 0.1;
-      setPredLowest(Math.round(predProductSelected.price * dropMultiplier));
+      // 2090 model decay prediction
+      const yearsDiff = predictYear - 2026;
+      const decayFactor = Math.max(0.4, 1 - (yearsDiff * 0.008));
+      setPredLowest(Math.round(predProductSelected.price * decayFactor));
       setIsPredicting(false);
     }, 800);
   };
@@ -141,7 +154,7 @@ export default function NexusAILabPage() {
             Experimental Playground
           </div>
           <h1 className="text-3xl md:text-5xl font-black uppercase tracking-tight text-white flex items-center gap-2">
-            Nexus AI Lab
+            Nexus AI Lab <span className="text-xs bg-[#ff9900]/20 text-[#ff9900] px-2.5 py-0.5 rounded font-mono font-bold uppercase tracking-widest">Model 2090</span>
           </h1>
           <p className="text-xs text-gray-400 font-mono mt-1">
             Access advanced decision sandboxes and specification compilers. Strictly functional and telemetry-free.
@@ -193,7 +206,7 @@ export default function NexusAILabPage() {
                   />
                 </div>
 
-                <div className="border border-white/5 bg-black/60 rounded-2xl h-52 overflow-y-auto p-4 space-y-3 custom-scrollbar">
+                <div className="border border-white/5 bg-black/60 rounded-2xl h-64 overflow-y-auto p-4 space-y-3 custom-scrollbar">
                   {arenaLogs.length === 0 && !isDebating ? (
                     <div className="h-full flex flex-col items-center justify-center text-center text-gray-600">
                       <Terminal className="w-8 h-8 mb-2 animate-pulse" />
@@ -259,7 +272,7 @@ export default function NexusAILabPage() {
                   <div className="space-y-1">
                     <div className="flex justify-between text-[10px] text-gray-500 uppercase tracking-wider font-bold">
                       <span>Supply Buffer Index</span>
-                      <span className="text-cyan-400">{supplyIndex}%</span>
+                      <span className="text-[#ff9900]">{supplyIndex}%</span>
                     </div>
                     <input
                       type="range"
@@ -267,14 +280,14 @@ export default function NexusAILabPage() {
                       max="100"
                       value={supplyIndex}
                       onChange={(e) => setSupplyIndex(parseInt(e.target.value))}
-                      className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-cyan-400"
+                      className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#ff9900]"
                     />
                   </div>
 
                   <div className="space-y-1">
                     <div className="flex justify-between text-[10px] text-gray-500 uppercase tracking-wider font-bold">
                       <span>Demand Buffer Index</span>
-                      <span className="text-cyan-400">{demandIndex}%</span>
+                      <span className="text-[#ff9900]">{demandIndex}%</span>
                     </div>
                     <input
                       type="range"
@@ -282,7 +295,7 @@ export default function NexusAILabPage() {
                       max="100"
                       value={demandIndex}
                       onChange={(e) => setDemandIndex(parseInt(e.target.value))}
-                      className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-cyan-400"
+                      className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#ff9900]"
                     />
                   </div>
                 </div>
@@ -310,7 +323,7 @@ export default function NexusAILabPage() {
               <div className="p-6 border border-white/10 rounded-3xl bg-[#0f172a]/40 backdrop-blur-md flex flex-col justify-between text-left font-mono">
                 <div className="space-y-4">
                   <div className="flex items-center gap-2 border-b border-white/5 pb-3">
-                    <Activity className="w-5 h-5 text-cyan-400" />
+                    <Activity className="w-5 h-5 text-[#ff9900]" />
                     <span className="text-[10px] uppercase tracking-widest font-black text-gray-300">Simulation Output</span>
                   </div>
 
@@ -348,16 +361,19 @@ export default function NexusAILabPage() {
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-[10px] text-gray-500 uppercase tracking-wider block font-bold">Prediction Target (Days)</label>
-                    <select
-                      value={predictDays}
-                      onChange={(e) => setPredictDays(parseInt(e.target.value))}
-                      className="w-full bg-[#111827] border border-white/10 rounded-xl px-4 py-2.5 text-white focus:outline-none"
-                    >
-                      <option value="15">15-Day window</option>
-                      <option value="30">30-Day window</option>
-                      <option value="60">60-Day window</option>
-                    </select>
+                    <div className="flex justify-between text-[10px] text-gray-500 uppercase tracking-wider font-bold">
+                      <span>Target Prediction Year</span>
+                      <span className="text-[#ff9900]">{predictYear}</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="2026"
+                      max="2090"
+                      step="1"
+                      value={predictYear}
+                      onChange={(e) => setPredictYear(parseInt(e.target.value))}
+                      className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#ff9900]"
+                    />
                   </div>
                 </div>
 
@@ -366,7 +382,7 @@ export default function NexusAILabPage() {
                   disabled={isPredicting}
                   className="px-6 py-2.5 bg-[#ff9900] hover:bg-[#ffb700] text-black font-bold uppercase tracking-wider rounded-xl transition-all cursor-pointer"
                 >
-                  Generate Trend Chart
+                  Generate 2090 Trend
                 </button>
               </div>
 
@@ -375,7 +391,7 @@ export default function NexusAILabPage() {
                 <div className="space-y-4">
                   <div className="flex items-center gap-2 border-b border-white/5 pb-3">
                     <Zap className="w-5 h-5 text-[#ff9900]" />
-                    <span className="text-[10px] uppercase tracking-widest font-black text-gray-300">Trend Predictions</span>
+                    <span className="text-[10px] uppercase tracking-widest font-black text-gray-300">Trend Predictions ({predictYear})</span>
                   </div>
 
                   <div className="space-y-2">
